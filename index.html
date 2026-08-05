@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe NPS · COBRA</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#eef1f4;
+    --panel:#ffffff;
+    --panel-2:#f5f7f9;
+    --border:#e0e5ea;
+    --text:#22303f;
+    --text-dim:#6b7a8c;
+    --cobra-navy:#003c71;
+    --cobra-blue:#0071ce;
+    --celeste:#29a9e0;
+    --celeste-soft:#e8f6fd;
+    --promotor:#1fa971;
+    --neutro:#e2962e;
+    --detractor:#e2523e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  header.hero{
+    background:linear-gradient(120deg,#ffffff 0%,var(--celeste-soft) 55%,#dcf1fb 100%);
+    padding:34px 6vw 40px;
+    position:relative;
+    overflow:hidden;
+    border-bottom:4px solid var(--celeste);
+  }
+  header.hero::after{
+    content:"";
+    position:absolute; right:-100px; top:-100px;
+    width:340px; height:340px; border-radius:50%;
+    background:radial-gradient(circle, rgba(41,169,224,0.18), transparent 70%);
+  }
+  .brand-row{ display:flex; align-items:center; gap:18px; margin-bottom:22px; }
+  .brand-row img{ height:46px; }
+  .brand-divider{ width:1px; height:34px; background:var(--border); }
+  .eyebrow{ text-transform:uppercase; letter-spacing:.14em; font-size:12.5px; color:var(--celeste); font-weight:800; }
+  h1{ margin:0 0 6px; font-size:clamp(26px,4vw,38px); font-weight:800; letter-spacing:-0.01em; color:var(--cobra-navy); }
+  .subtitle{ color:#3a4a5c; font-size:15px; max-width:660px; line-height:1.55; }
+  .meta-row{ display:flex; gap:22px; flex-wrap:wrap; margin-top:22px; font-size:13px; color:#3a4a5c; }
+  .meta-row span b{color:var(--cobra-navy);}
+  main{ padding:36px 6vw 80px; max-width:1280px; margin:0 auto; }
+
+  .kpi-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin:-58px 0 34px; position:relative; z-index:2; }
+  .kpi-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px 20px 18px; box-shadow:0 10px 24px rgba(20,50,80,.08); }
+  .kpi-card .label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-dim); font-weight:700; margin-bottom:8px; }
+  .kpi-card .value{ font-size:30px; font-weight:800; line-height:1; color:var(--cobra-navy); }
+  .kpi-card .value.nps{ color:var(--celeste); }
+  .kpi-card .sub{ font-size:12px; color:var(--text-dim); margin-top:6px; }
+
+  section{ margin-bottom:44px; }
+  .section-title{ display:flex; align-items:baseline; gap:10px; margin-bottom:6px; }
+  .section-title .num{ font-size:13px; font-weight:800; color:var(--celeste); background:rgba(41,169,224,0.12); border:1px solid rgba(41,169,224,.35); border-radius:6px; padding:2px 8px; }
+  .section-title h2{ margin:0; font-size:20px; font-weight:750; color:var(--cobra-navy); }
+  .section-desc{ color:var(--text-dim); font-size:13.5px; margin:0 0 18px; max-width:820px; line-height:1.55;}
+
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:22px 24px 14px; box-shadow:0 4px 14px rgba(20,50,80,.05); }
+  .grid-2{ display:grid; grid-template-columns:1.35fr .95fr; gap:18px; }
+  @media (max-width:880px){ .grid-2{grid-template-columns:1fr;} }
+
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; color:var(--text-dim); font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; padding:10px 10px; border-bottom:1px solid var(--border); }
+  td{ padding:10px; border-bottom:1px solid var(--panel-2); }
+  tr:hover td{ background:var(--panel-2); }
+  .badge{ display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:700; }
+  .badge.hi{ background:rgba(31,169,113,.12); color:var(--promotor); }
+  .badge.mid{ background:rgba(226,150,46,.14); color:var(--neutro); }
+  .badge.lo{ background:rgba(226,82,62,.12); color:var(--detractor); }
+
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:780px){ .two-col{grid-template-columns:1fr;} }
+
+  .callout{ border-left:3px solid var(--celeste); background:linear-gradient(90deg, var(--celeste-soft), transparent); padding:14px 18px; border-radius:0 10px 10px 0; font-size:13.5px; color:#2c3e50; line-height:1.6; }
+  .callout.warn{ border-left-color:var(--neutro); background:linear-gradient(90deg, rgba(226,150,46,.10), transparent); }
+
+  .rec-list{ display:grid; gap:10px; margin-top:8px; }
+  .rec-item{ display:flex; gap:12px; align-items:flex-start; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .rec-item .idx{ flex:none; width:26px; height:26px; border-radius:50%; background:var(--celeste); color:#fff; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; }
+  .rec-item p{ margin:0; font-size:13.5px; color:#334252; line-height:1.55; }
+  .rec-item strong{ color:var(--cobra-navy); }
+
+  .perf-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:880px){ .perf-grid{grid-template-columns:1fr;} }
+  .perf-col-title{ font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .perf-col-title.top{ color:var(--promotor); }
+  .perf-col-title.bottom{ color:var(--detractor); }
+  .tech-card{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:12px; box-shadow:0 3px 10px rgba(20,50,80,.04); }
+  .tech-card.bottom-card{ border-left:4px solid var(--detractor); }
+  .tech-card.top-card{ border-left:4px solid var(--promotor); }
+  .tech-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .tech-name{ font-weight:750; font-size:14px; color:var(--cobra-navy); }
+  .tech-nps{ font-weight:800; font-size:15px; }
+  .tech-nps.lo{ color:var(--detractor); }
+  .tech-nps.hi{ color:var(--promotor); }
+  .tech-meta{ font-size:12px; color:var(--text-dim); margin-bottom:8px; }
+  .tech-tag{ display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; margin:2px 4px 0 0; }
+  .tag-weak{ background:rgba(226,82,62,.10); color:var(--detractor); }
+  .tag-strong{ background:rgba(31,169,113,.10); color:var(--promotor); }
+  .tech-quote{ font-size:12.5px; color:#4a5a6b; font-style:italic; margin-top:8px; background:var(--panel-2); border-radius:8px; padding:8px 10px; border-left:2px solid var(--border); }
+
+  footer{ text-align:center; padding:26px; color:var(--text-dim); font-size:12px; border-top:1px solid var(--border); }
+  canvas{ max-width:100%; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="brand-row">
+    <img src="logo-cobra.png" alt="Cobra">
+    <div class="brand-divider"></div>
+    <div class="eyebrow">Calidad &amp; Capacitación · Reporte de Satisfacción</div>
+  </div>
+  <h1>Informe NPS — COBRA</h1>
+  <div class="subtitle">Net Promoter Score de las intervenciones técnicas realizadas por COBRA (Zona Punta Arenas), a partir de las encuestas de satisfacción post-servicio. Incluye evolución diaria/semanal, desglose operativo, proyección de tendencia y análisis individual de técnicos.</div>
+  <div class="meta-row" id="metaRow"></div>
+</header>
+
+<main>
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <section>
+    <div class="section-title"><span class="num">01</span><h2>Evolución diaria del NPS</h2></div>
+    <p class="section-desc">NPS calculado día a día durante el mes. Las oscilaciones fuertes en días con pocas encuestas responden a bajo volumen muestral, no necesariamente a un problema de servicio sostenido.</p>
+    <div class="panel"><canvas id="chartDiario" height="95"></canvas></div>
+  </section>
+
+  <section>
+    <div class="section-title"><span class="num">02</span><h2>Evolución semanal y proyección</h2></div>
+    <p class="section-desc">Agregando por semana se reduce el ruido estadístico. Se aplica una regresión lineal simple sobre las semanas del mes para proyectar el cierre de tendencia hacia la semana siguiente.</p>
+    <div class="grid-2">
+      <div class="panel"><canvas id="chartSemanal" height="90"></canvas></div>
+      <div class="panel">
+        <div style="font-size:13px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Detalle semanal</div>
+        <table id="tablaSemanal"></table>
+        <div class="callout" style="margin-top:16px;" id="proyeccionCallout"></div>
+        <div class="callout warn" style="margin-top:10px;">Proyección basada únicamente en los datos del mes en curso. Validar con el cierre del mes siguiente antes de fijarla como meta oficial.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><span class="num">03</span><h2>Desglose por tipo de intervención</h2></div>
+    <p class="section-desc">Comparativa de NPS entre servicios de instalación y reparación.</p>
+    <div class="two-col">
+      <div class="panel"><canvas id="chartTipo" height="140"></canvas></div>
+      <div class="panel">
+        <div style="font-size:13px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Lectura de calidad</div>
+        <table id="tablaTipo"></table>
+        <div class="callout" style="margin-top:16px;" id="tipoCallout"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><span class="num">04</span><h2>Ranking de técnicos (mín. 5 encuestas)</h2></div>
+    <p class="section-desc">Ordenado de mayor a menor NPS individual. Base para reconocimiento y para focalizar coaching/capacitación.</p>
+    <div class="panel"><table id="tablaTecnicos"></table></div>
+  </section>
+
+  <section>
+    <div class="section-title"><span class="num">05</span><h2>Mejor y menor desempeño</h2></div>
+    <p class="section-desc">Cruce del ranking con las observaciones textuales que dejaron los clientes, para identificar la causa raíz detrás del número — no solo el puntaje.</p>
+    <div class="perf-grid">
+      <div>
+        <div class="perf-col-title top">🟢 Mejor desempeño</div>
+        <div id="topTecnicos"></div>
+      </div>
+      <div>
+        <div class="perf-col-title bottom">🔴 Menor desempeño</div>
+        <div id="bottomTecnicos"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><span class="num">06</span><h2>Conclusiones y recomendaciones</h2></div>
+    <div class="rec-list" id="recList"></div>
+  </section>
+</main>
+
+<footer id="footerText"></footer>
+
+<script>
+const DATA = {"periodo":"Julio 2026","zona":"Punta Arenas","enviadas":898,"respondidas":290,"promotores":254,"neutros":23,"detractores":13,"nps":83.1,"daily":[{"dia":1,"P":5,"N":0,"D":0,"total":5,"nps":100},{"dia":2,"P":11,"N":1,"D":0,"total":12,"nps":91.7},{"dia":3,"P":7,"N":2,"D":0,"total":9,"nps":77.8},{"dia":4,"P":6,"N":0,"D":2,"total":8,"nps":50},{"dia":6,"P":9,"N":3,"D":1,"total":13,"nps":61.5},{"dia":7,"P":8,"N":1,"D":1,"total":10,"nps":70},{"dia":8,"P":14,"N":1,"D":1,"total":16,"nps":81.2},{"dia":9,"P":15,"N":0,"D":1,"total":16,"nps":87.5},{"dia":10,"P":11,"N":0,"D":0,"total":11,"nps":100},{"dia":11,"P":5,"N":0,"D":1,"total":6,"nps":66.7},{"dia":13,"P":9,"N":0,"D":0,"total":9,"nps":100},{"dia":14,"P":9,"N":1,"D":1,"total":11,"nps":72.7},{"dia":15,"P":11,"N":2,"D":0,"total":13,"nps":84.6},{"dia":17,"P":8,"N":0,"D":1,"total":9,"nps":77.8},{"dia":18,"P":8,"N":1,"D":0,"total":9,"nps":88.9},{"dia":20,"P":10,"N":1,"D":1,"total":12,"nps":75},{"dia":21,"P":11,"N":1,"D":1,"total":13,"nps":76.9},{"dia":22,"P":15,"N":1,"D":0,"total":16,"nps":93.8},{"dia":23,"P":13,"N":1,"D":0,"total":14,"nps":92.9},{"dia":24,"P":8,"N":1,"D":0,"total":9,"nps":88.9},{"dia":25,"P":6,"N":2,"D":1,"total":9,"nps":55.6},{"dia":27,"P":10,"N":1,"D":0,"total":11,"nps":90.9},{"dia":28,"P":12,"N":1,"D":0,"total":13,"nps":92.3},{"dia":29,"P":12,"N":0,"D":1,"total":13,"nps":84.6},{"dia":30,"P":14,"N":0,"D":0,"total":14,"nps":100},{"dia":31,"P":7,"N":2,"D":0,"total":9,"nps":77.8}],"weekly":[{"semana":1,"P":46,"N":7,"D":4,"total":57,"nps":73.7},{"semana":2,"P":63,"N":2,"D":4,"total":69,"nps":85.5},{"semana":3,"P":48,"N":5,"D":3,"total":56,"nps":80.4},{"semana":4,"P":64,"N":7,"D":1,"total":72,"nps":87.5},{"semana":5,"P":33,"N":2,"D":1,"total":36,"nps":88.9}],"tipo":[{"tipo":"Repa","P":138,"N":19,"D":9,"total":166,"nps":77.7},{"tipo":"Instala","P":116,"N":4,"D":4,"total":124,"nps":90.3}],"tecnicos":[{"tecnico":"EGON RODRIGO VILLARROEL ZUNIGA","P":26,"N":4,"D":2,"total":32,"nps":75},{"tecnico":"JUAN CARLOS ULLOA MORAGA","P":15,"N":1,"D":1,"total":17,"nps":82.4},{"tecnico":"JOSE ALEXIS BARRIA ALMONACID","P":29,"N":3,"D":0,"total":32,"nps":90.6},{"tecnico":"CARLOS ALFONSO PINTO AGUILAR","P":6,"N":0,"D":0,"total":6,"nps":100},{"tecnico":"CARLOS ROBERTO SALDIVIA HERNANDEZ","P":13,"N":0,"D":0,"total":13,"nps":100},{"tecnico":"VICTOR HUGO BARRIA ALMONACID","P":20,"N":3,"D":2,"total":25,"nps":72},{"tecnico":"LUIS ALFONSO TORRES MILLAQUEN","P":25,"N":2,"D":3,"total":30,"nps":73.3},{"tecnico":"RENE EDUARDO MAYORGA LEUQUEN","P":11,"N":0,"D":0,"total":11,"nps":100},{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","P":24,"N":1,"D":0,"total":25,"nps":96},{"tecnico":"RODRIGO EDUARDO GODOY CARCAMO","P":25,"N":4,"D":0,"total":29,"nps":86.2},{"tecnico":"GABRIEL LEONIDAS RAMIREZ IBARRA","P":14,"N":2,"D":1,"total":17,"nps":76.5},{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","P":22,"N":2,"D":3,"total":27,"nps":70.4},{"tecnico":"FELIPE ANTONIO RIOS CIFUENTES","P":24,"N":1,"D":1,"total":26,"nps":88.5}],"highlights":{"top":[{"tecnico":"CARLOS ROBERTO SALDIVIA HERNANDEZ","nps":100,"total":13,"N":0,"D":0,"tags":["Cero friccion reportada"],"quotes":["El ejecutivo muy educado, se presenta y explica raz\u0027on de la visita. Resolvio el problema de inmediato."]},{"tecnico":"RENE EDUARDO MAYORGA LEUQUEN","nps":100,"total":11,"N":0,"D":0,"tags":["Cero friccion reportada"],"quotes":["Persona amable, trabajo impecable y con paciencia para contestar cualquier pregunta respecto al trabajo que esta realizando."]},{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","nps":96,"total":25,"N":1,"D":0,"tags":["Buen volumen + consistencia"],"quotes":["El tecnico nada que decir Solo me quedo una duda ya que indica que el no estaba capacitado para mover una cajita de donde sale el cable hacia el route"]},{"tecnico":"JOSE ALEXIS BARRIA ALMONACID","nps":90.6,"total":32,"N":3,"D":0,"tags":["Mayor volumen del equipo, sin detractores"],"quotes":["Destaco la rapidez, de un dia para otro ya estaba el tecnico en mi casa, dejo todo en orden y funcional."]}],"bottom":[{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","nps":70.4,"total":27,"N":2,"D":3,"tags":["Orden/limpieza post-trabajo"],"quotes":["Todos los residuos del trabajo realizado se los debe llevar el tecnico","El tecnico muy bien pero realmente mala lamprataforma de movistar"]},{"tecnico":"VICTOR HUGO BARRIA ALMONACID","nps":72,"total":25,"N":3,"D":2,"tags":["Tiempos de respuesta"],"quotes":["Lo que deberian mejorar es tener mayor rapidez al solucionar el problema... en mi caso estuve 2 dias sin Internet ni television","mejorar los tiempos de visita del tecnico, ya que estuve 3 dias sin el servicio Porque no tenian disponibilidad."]},{"tecnico":"LUIS ALFONSO TORRES MILLAQUEN","nps":73.3,"total":30,"N":2,"D":3,"tags":["Claridad al explicar la solucion","Calidad tecnica (falla persiste)"],"quotes":["el tecnico resolvio el problema que habia para instalar el servicio, pero demostro poca claridad o disposicion al contestar nuestras preguntas o dudas","La intermitencia de la Internet"]},{"tecnico":"EGON RODRIGO VILLARROEL ZUNIGA","nps":75,"total":32,"N":4,"D":2,"tags":["Ver comentarios de clientes"],"quotes":["A mis todos conocidos, muy bueno el tecnico, que nos asistio. Muchas gracias","El caballero fue muy amable y 100% recomendable"]}]},"conclusiones":["\u003cstrong\u003eTendencia del mes:\u003c/strong\u003e el NPS paso de 73.7% (semana 1) a 88.9% (semana 5), con una pendiente promedio de +3.8 pts NPS por semana.","\u003cstrong\u003eRepa como palanca de mejora:\u003c/strong\u003e con 77.7% vs 90.3% de Instala, priorizar auditorias de calidad y refuerzo de capacitacion en ese protocolo (brecha de 12.6 pts).","\u003cstrong\u003eCoaching dirigido:\u003c/strong\u003e priorizar retroalimentacion 1:1 con Gonzalo Rodrigo Carcamo Maldonado, Victor Hugo Barria Almonacid, Luis Alfonso Torres Millaquen, Egon Rodrigo Villarroel Zuniga, cuyos comentarios apuntan a causas concretas y accionables.","\u003cstrong\u003eReconocimiento y buenas practicas:\u003c/strong\u003e Carlos Roberto Saldivia Hernandez, Rene Eduardo Mayorga Leuquen, Eduardo Andres Witto Mansilla, Jose Alexis Barria Almonacid cerraron el mes sin detractores (o casi) pese a buen volumen -- usarlos como referentes en instancias de capacitacion interna.","\u003cstrong\u003eTasa de respuesta (32.3%):\u003c/strong\u003e evaluar canal y timing de envio de la encuesta para mejorar la representatividad estadistica, especialmente en tecnicos con pocas respuestas."],"generadoEl":"2026-08-05 19:43"};
+
+function fmt1(n){ return (Math.round(n*10)/10).toFixed(1).replace('.0','').length ? (Math.round(n*10)/10) : n; }
+function npsClass(v){ return v>=85?'hi':(v>=75?'mid':'lo'); }
+function titleCase(s){ return s.split(' ').map(w=>w?w[0]+w.slice(1).toLowerCase():w).join(' '); }
+
+// ---- Meta row ----
+document.getElementById('metaRow').innerHTML = `
+  <span>📅 Periodo analizado: <b>${DATA.periodo}</b></span>
+  <span>📍 Zona: <b>${DATA.zona}</b></span>
+  <span>🧾 Base: <b>${DATA.enviadas} encuestas enviadas</b> · ${DATA.respondidas} respondidas</span>
+  <span>🧮 Fórmula: <b>(Promotores − Detractores) / Total respondidas</b></span>
+`;
+
+// ---- KPI cards ----
+const tasaRespuesta = (DATA.respondidas / DATA.enviadas * 100).toFixed(1);
+document.getElementById('kpiGrid').innerHTML = `
+  <div class="kpi-card"><div class="label">NPS General</div><div class="value nps">${DATA.nps}%</div><div class="sub">Sobre ${DATA.respondidas} encuestas respondidas</div></div>
+  <div class="kpi-card"><div class="label">Tasa de respuesta</div><div class="value">${tasaRespuesta}%</div><div class="sub">${DATA.respondidas} de ${DATA.enviadas} encuestas enviadas</div></div>
+  <div class="kpi-card"><div class="label">Promotores</div><div class="value" style="color:var(--promotor)">${DATA.promotores}</div><div class="sub">${(DATA.promotores/DATA.respondidas*100).toFixed(1)}% de los respondidos</div></div>
+  <div class="kpi-card"><div class="label">Neutros</div><div class="value" style="color:var(--neutro)">${DATA.neutros}</div><div class="sub">${(DATA.neutros/DATA.respondidas*100).toFixed(1)}% de los respondidos</div></div>
+  <div class="kpi-card"><div class="label">Detractores</div><div class="value" style="color:var(--detractor)">${DATA.detractores}</div><div class="sub">${(DATA.detractores/DATA.respondidas*100).toFixed(1)}% de los respondidos</div></div>
+`;
+
+// ---- linear regression on weekly nps ----
+function linreg(xs, ys){
+  const n = xs.length;
+  const sx = xs.reduce((a,b)=>a+b,0), sy = ys.reduce((a,b)=>a+b,0);
+  const sxy = xs.reduce((a,x,i)=>a+x*ys[i],0);
+  const sxx = xs.reduce((a,x)=>a+x*x,0);
+  const m = (n*sxy - sx*sy)/(n*sxx - sx*sx);
+  const c = (sy - m*sx)/n;
+  return {m,c};
+}
+const wx = DATA.weekly.map(w=>w.semana);
+const wy = DATA.weekly.map(w=>w.nps);
+const {m,c} = linreg(wx, wy);
+const projSemana = DATA.weekly.length + 1;
+const projValue = Math.min(100, +(m*projSemana + c).toFixed(1));
+
+const fontColor = '#6b7a8c';
+Chart.defaults.color = fontColor;
+Chart.defaults.borderColor = 'rgba(20,50,80,0.06)';
+Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+
+// ---- Chart 1: Daily NPS ----
+new Chart(document.getElementById('chartDiario'), {
+  type: 'line',
+  data: {
+    labels: DATA.daily.map(d=>'Día '+d.dia),
+    datasets: [
+      { label:'NPS diario (%)', data: DATA.daily.map(d=>d.nps), borderColor:'#29a9e0', backgroundColor:'rgba(41,169,224,0.14)', fill:true, tension:0.35, pointRadius:3, pointBackgroundColor:'#29a9e0', yAxisID:'y' },
+      { label:'Volumen de encuestas', data: DATA.daily.map(d=>d.total), type:'bar', backgroundColor:'rgba(0,60,113,0.18)', borderRadius:4, yAxisID:'y1' }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'top', labels:{boxWidth:10} } },
+    scales: {
+      y: { position:'left', min:0, max:100, title:{display:true,text:'NPS %'}, grid:{color:'rgba(20,50,80,0.06)'} },
+      y1:{ position:'right', min:0, grid:{display:false}, title:{display:true,text:'N° encuestas'} }
+    }
+  }
+});
+
+// ---- Chart 2: Weekly NPS + trend + projection ----
+const weekLabels = [...DATA.weekly.map(w=>'S'+w.semana), 'S'+projSemana+' (proy.)'];
+const weekActual = [...wy, null];
+const trendLine = weekLabels.map((_,i)=> +(m*(i+1)+c).toFixed(1));
+new Chart(document.getElementById('chartSemanal'), {
+  type: 'bar',
+  data: {
+    labels: weekLabels,
+    datasets: [
+      { label:'NPS semanal real', data: weekActual, backgroundColor:'rgba(0,113,206,0.85)', borderRadius:6, maxBarThickness:46 },
+      { label:'Proyección', data: weekLabels.map((_,i)=> i===weekLabels.length-1 ? projValue : null), backgroundColor:'rgba(41,169,224,0.55)', borderRadius:6, maxBarThickness:46 },
+      { label:'Tendencia (regresión lineal)', data: trendLine, type:'line', borderColor:'#e2962e', borderDash:[6,4], pointRadius:0, tension:0 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position:'top', labels:{boxWidth:10} } },
+    scales: { y: { min:0, max:100, title:{display:true,text:'NPS %'}, grid:{color:'rgba(20,50,80,0.06)'} } }
+  }
+});
+
+// ---- Chart 3: Tipo servicio ----
+new Chart(document.getElementById('chartTipo'), {
+  type: 'bar',
+  data: {
+    labels: DATA.tipo.map(t=>t.tipo),
+    datasets: [
+      { label:'Promotores', data: DATA.tipo.map(t=>t.P), backgroundColor:'#1fa971', borderRadius:5 },
+      { label:'Neutros', data: DATA.tipo.map(t=>t.N), backgroundColor:'#e2962e', borderRadius:5 },
+      { label:'Detractores', data: DATA.tipo.map(t=>t.D), backgroundColor:'#e2523e', borderRadius:5 }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { position:'top', labels:{boxWidth:10} } },
+    scales: { x: { stacked:true, grid:{color:'rgba(20,50,80,0.06)'} }, y: { stacked:true } }
+  }
+});
+
+// ---- Table: Semanal detail ----
+let rowsSem = '<tr><th>Semana</th><th>NPS</th><th>Encuestas</th></tr>';
+DATA.weekly.forEach(w=>{
+  rowsSem += `<tr><td>Semana ${w.semana}</td><td><span class="badge ${npsClass(w.nps)}">${w.nps}%</span></td><td>${w.total}</td></tr>`;
+});
+rowsSem += `<tr><td>Semana ${projSemana} (proyectada)</td><td><span class="badge hi">${projValue}%</span></td><td>—</td></tr>`;
+document.getElementById('tablaSemanal').innerHTML = rowsSem;
+
+const primera = DATA.weekly[0], ultima = DATA.weekly[DATA.weekly.length-1];
+const pendiente = ((ultima.nps - primera.nps) / (DATA.weekly.length - 1)).toFixed(1);
+document.getElementById('proyeccionCallout').innerHTML =
+  `<b>Proyección semana ${projSemana} (trend lineal):</b> ~${Math.max(0,projValue-1).toFixed(0)}–${Math.min(100,projValue+1).toFixed(0)}% NPS si se mantiene el ritmo de mejora actual (${pendiente>=0?'+':''}${pendiente} pts NPS por semana en promedio).`;
+
+// ---- Table: Tipo ----
+let rowsTipo = '<tr><th>Tipo</th><th>NPS</th><th>Encuestas</th><th>Detractores</th></tr>';
+DATA.tipo.slice().sort((a,b)=>b.nps-a.nps).forEach(t=>{
+  rowsTipo += `<tr><td>${t.tipo}</td><td><span class="badge ${npsClass(t.nps)}">${t.nps}%</span></td><td>${t.total}</td><td>${t.D}</td></tr>`;
+});
+document.getElementById('tablaTipo').innerHTML = rowsTipo;
+const tipoSorted = DATA.tipo.slice().sort((a,b)=>b.nps-a.nps);
+const brecha = (tipoSorted[0].nps - tipoSorted[1].nps).toFixed(1);
+document.getElementById('tipoCallout').innerHTML =
+  `La brecha de <b>${brecha} pts</b> entre ${tipoSorted[0].tipo} y ${tipoSorted[1].tipo} sugiere foco de mejora en el protocolo de ${tipoSorted[1].tipo.toLowerCase()}: tiempos de resolución, comunicación de causa raíz y seguimiento post-visita.`;
+
+// ---- Table: Tecnicos ----
+let rowsTec = '<tr><th>#</th><th>Técnico</th><th>NPS</th><th>Encuestas</th><th>Prom. / Neu. / Det.</th></tr>';
+DATA.tecnicos.slice().sort((a,b)=>b.nps-a.nps).forEach((t,i)=>{
+  rowsTec += `<tr>
+    <td>${i+1}</td>
+    <td>${titleCase(t.tecnico)}</td>
+    <td><span class="badge ${npsClass(t.nps)}">${t.nps}%</span></td>
+    <td>${t.total}</td>
+    <td><span style="color:#1fa971">${t.P}</span> / <span style="color:#e2962e">${t.N}</span> / <span style="color:#e2523e">${t.D}</span></td>
+  </tr>`;
+});
+document.getElementById('tablaTecnicos').innerHTML = rowsTec;
+
+// ---- Highlights: top / bottom técnicos ----
+function techCard(t, kind){
+  const npsCls = kind==='top' ? 'hi' : 'lo';
+  const tagCls = kind==='top' ? 'tag-strong' : 'tag-weak';
+  const tags = (t.tags||[]).map(tag=>`<span class="tech-tag ${tagCls}">${tag}</span>`).join('');
+  const quotes = (t.quotes||[]).map(q=>`<div class="tech-quote">"${q}"</div>`).join('');
+  return `<div class="tech-card ${kind==='top'?'top-card':'bottom-card'}">
+    <div class="tech-head"><span class="tech-name">${titleCase(t.tecnico)}</span><span class="tech-nps ${npsCls}">${t.nps}%</span></div>
+    <div class="tech-meta">${t.total} encuestas · ${t.N} neutros · ${t.D} detractores</div>
+    ${tags}
+    ${quotes}
+  </div>`;
+}
+document.getElementById('topTecnicos').innerHTML = DATA.highlights.top.map(t=>techCard(t,'top')).join('');
+document.getElementById('bottomTecnicos').innerHTML = DATA.highlights.bottom.map(t=>techCard(t,'bottom')).join('');
+
+// ---- Conclusiones ----
+document.getElementById('recList').innerHTML = DATA.conclusiones.map((c,i)=>`
+  <div class="rec-item"><div class="idx">${i+1}</div><p>${c}</p></div>
+`).join('');
+
+// ---- Footer ----
+document.getElementById('footerText').innerHTML =
+  `Informe generado a partir de NPS_GENERAL.xlsm (hoja BBDD) · Filtro: Colaborador = COBRA, Estado = ACTIVO, Duplicado = 0 · ${DATA.periodo} · Generado ${DATA.generadoEl}`;
+</script>
+
+</body>
+</html>
