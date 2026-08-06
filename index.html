@@ -122,7 +122,7 @@
     <div class="eyebrow">Calidad &amp; Capacitación · Reporte de Satisfacción</div>
   </div>
   <h1>Informe NPS — COBRA</h1>
-  <div class="subtitle">Net Promoter Score de las intervenciones técnicas realizadas por COBRA (Zona Punta Arenas), a partir de las encuestas de satisfacción post-servicio. Incluye evolución diaria/semanal, desglose operativo, proyección de tendencia y análisis individual de técnicos.</div>
+  <div class="subtitle" id="heroSubtitle">Net Promoter Score de las intervenciones técnicas realizadas por COBRA, a partir de las encuestas de satisfacción post-servicio. Incluye evolución diaria/semanal, desglose por zona, proyección de tendencia y análisis individual de técnicos.</div>
   <div class="meta-row" id="metaRow"></div>
 </header>
 
@@ -150,7 +150,20 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">03</span><h2>Desglose por tipo de intervención</h2></div>
+    <div class="section-title"><span class="num">03</span><h2>Desglose por zona</h2></div>
+    <p class="section-desc">Comparativa de NPS entre zonas, cada una frente a la meta institucional.</p>
+    <div class="two-col">
+      <div class="panel"><canvas id="chartZona" height="140"></canvas></div>
+      <div class="panel">
+        <div style="font-size:13px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Lectura por zona</div>
+        <table id="tablaZona"></table>
+        <div class="callout" style="margin-top:16px;" id="zonaCallout"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><span class="num">04</span><h2>Desglose por tipo de intervención</h2></div>
     <p class="section-desc">Comparativa de NPS entre servicios de instalación y reparación.</p>
     <div class="two-col">
       <div class="panel"><canvas id="chartTipo" height="140"></canvas></div>
@@ -163,13 +176,13 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">04</span><h2>Ranking de técnicos (mín. 5 encuestas)</h2></div>
+    <div class="section-title"><span class="num">05</span><h2>Ranking de técnicos (mín. 5 encuestas)</h2></div>
     <p class="section-desc">Ordenado de mayor a menor NPS individual. Base para reconocimiento y para focalizar coaching/capacitación.</p>
     <div class="panel"><table id="tablaTecnicos"></table></div>
   </section>
 
   <section>
-    <div class="section-title"><span class="num">05</span><h2>Mejor y menor desempeño</h2></div>
+    <div class="section-title"><span class="num">06</span><h2>Mejor y menor desempeño</h2></div>
     <p class="section-desc">Cruce del ranking con las observaciones textuales que dejaron los clientes, para identificar la causa raíz detrás del número — no solo el puntaje.</p>
     <div class="perf-grid">
       <div>
@@ -184,7 +197,7 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">06</span><h2>Conclusiones y recomendaciones</h2></div>
+    <div class="section-title"><span class="num">07</span><h2>Conclusiones y recomendaciones</h2></div>
     <div class="rec-list" id="recList"></div>
   </section>
 </main>
@@ -192,13 +205,15 @@
 <footer id="footerText"></footer>
 
 <script>
-const DATA = {"periodo":"Julio 2026","zona":"Punta Arenas","enviadas":898,"respondidas":290,"promotores":254,"neutros":23,"detractores":13,"nps":83.1,"daily":[{"dia":1,"P":5,"N":0,"D":0,"total":5,"nps":100},{"dia":2,"P":11,"N":1,"D":0,"total":12,"nps":91.7},{"dia":3,"P":7,"N":2,"D":0,"total":9,"nps":77.8},{"dia":4,"P":6,"N":0,"D":2,"total":8,"nps":50},{"dia":6,"P":9,"N":3,"D":1,"total":13,"nps":61.5},{"dia":7,"P":8,"N":1,"D":1,"total":10,"nps":70},{"dia":8,"P":14,"N":1,"D":1,"total":16,"nps":81.2},{"dia":9,"P":15,"N":0,"D":1,"total":16,"nps":87.5},{"dia":10,"P":11,"N":0,"D":0,"total":11,"nps":100},{"dia":11,"P":5,"N":0,"D":1,"total":6,"nps":66.7},{"dia":13,"P":9,"N":0,"D":0,"total":9,"nps":100},{"dia":14,"P":9,"N":1,"D":1,"total":11,"nps":72.7},{"dia":15,"P":11,"N":2,"D":0,"total":13,"nps":84.6},{"dia":17,"P":8,"N":0,"D":1,"total":9,"nps":77.8},{"dia":18,"P":8,"N":1,"D":0,"total":9,"nps":88.9},{"dia":20,"P":10,"N":1,"D":1,"total":12,"nps":75},{"dia":21,"P":11,"N":1,"D":1,"total":13,"nps":76.9},{"dia":22,"P":15,"N":1,"D":0,"total":16,"nps":93.8},{"dia":23,"P":13,"N":1,"D":0,"total":14,"nps":92.9},{"dia":24,"P":8,"N":1,"D":0,"total":9,"nps":88.9},{"dia":25,"P":6,"N":2,"D":1,"total":9,"nps":55.6},{"dia":27,"P":10,"N":1,"D":0,"total":11,"nps":90.9},{"dia":28,"P":12,"N":1,"D":0,"total":13,"nps":92.3},{"dia":29,"P":12,"N":0,"D":1,"total":13,"nps":84.6},{"dia":30,"P":14,"N":0,"D":0,"total":14,"nps":100},{"dia":31,"P":7,"N":2,"D":0,"total":9,"nps":77.8}],"weekly":[{"semana":1,"P":46,"N":7,"D":4,"total":57,"nps":73.7},{"semana":2,"P":63,"N":2,"D":4,"total":69,"nps":85.5},{"semana":3,"P":48,"N":5,"D":3,"total":56,"nps":80.4},{"semana":4,"P":64,"N":7,"D":1,"total":72,"nps":87.5},{"semana":5,"P":33,"N":2,"D":1,"total":36,"nps":88.9}],"tipo":[{"tipo":"Repa","P":138,"N":19,"D":9,"total":166,"nps":77.7},{"tipo":"Instala","P":116,"N":4,"D":4,"total":124,"nps":90.3}],"tecnicos":[{"tecnico":"EGON RODRIGO VILLARROEL ZUNIGA","P":26,"N":4,"D":2,"total":32,"nps":75},{"tecnico":"JUAN CARLOS ULLOA MORAGA","P":15,"N":1,"D":1,"total":17,"nps":82.4},{"tecnico":"JOSE ALEXIS BARRIA ALMONACID","P":29,"N":3,"D":0,"total":32,"nps":90.6},{"tecnico":"CARLOS ALFONSO PINTO AGUILAR","P":6,"N":0,"D":0,"total":6,"nps":100},{"tecnico":"CARLOS ROBERTO SALDIVIA HERNANDEZ","P":13,"N":0,"D":0,"total":13,"nps":100},{"tecnico":"VICTOR HUGO BARRIA ALMONACID","P":20,"N":3,"D":2,"total":25,"nps":72},{"tecnico":"LUIS ALFONSO TORRES MILLAQUEN","P":25,"N":2,"D":3,"total":30,"nps":73.3},{"tecnico":"RENE EDUARDO MAYORGA LEUQUEN","P":11,"N":0,"D":0,"total":11,"nps":100},{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","P":24,"N":1,"D":0,"total":25,"nps":96},{"tecnico":"RODRIGO EDUARDO GODOY CARCAMO","P":25,"N":4,"D":0,"total":29,"nps":86.2},{"tecnico":"GABRIEL LEONIDAS RAMIREZ IBARRA","P":14,"N":2,"D":1,"total":17,"nps":76.5},{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","P":22,"N":2,"D":3,"total":27,"nps":70.4},{"tecnico":"FELIPE ANTONIO RIOS CIFUENTES","P":24,"N":1,"D":1,"total":26,"nps":88.5}],"highlights":{"top":[{"tecnico":"CARLOS ROBERTO SALDIVIA HERNANDEZ","nps":100,"total":13,"N":0,"D":0,"tags":["Cero friccion reportada"],"quotes":["El ejecutivo muy educado, se presenta y explica raz\u0027on de la visita. Resolvio el problema de inmediato."]},{"tecnico":"RENE EDUARDO MAYORGA LEUQUEN","nps":100,"total":11,"N":0,"D":0,"tags":["Cero friccion reportada"],"quotes":["Persona amable, trabajo impecable y con paciencia para contestar cualquier pregunta respecto al trabajo que esta realizando."]},{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","nps":96,"total":25,"N":1,"D":0,"tags":["Buen volumen + consistencia"],"quotes":["El tecnico nada que decir Solo me quedo una duda ya que indica que el no estaba capacitado para mover una cajita de donde sale el cable hacia el route"]},{"tecnico":"JOSE ALEXIS BARRIA ALMONACID","nps":90.6,"total":32,"N":3,"D":0,"tags":["Mayor volumen del equipo, sin detractores"],"quotes":["Destaco la rapidez, de un dia para otro ya estaba el tecnico en mi casa, dejo todo en orden y funcional."]}],"bottom":[{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","nps":70.4,"total":27,"N":2,"D":3,"tags":["Orden/limpieza post-trabajo"],"quotes":["Todos los residuos del trabajo realizado se los debe llevar el tecnico","El tecnico muy bien pero realmente mala lamprataforma de movistar"]},{"tecnico":"VICTOR HUGO BARRIA ALMONACID","nps":72,"total":25,"N":3,"D":2,"tags":["Tiempos de respuesta"],"quotes":["Lo que deberian mejorar es tener mayor rapidez al solucionar el problema... en mi caso estuve 2 dias sin Internet ni television","mejorar los tiempos de visita del tecnico, ya que estuve 3 dias sin el servicio Porque no tenian disponibilidad."]},{"tecnico":"LUIS ALFONSO TORRES MILLAQUEN","nps":73.3,"total":30,"N":2,"D":3,"tags":["Claridad al explicar la solucion","Calidad tecnica (falla persiste)"],"quotes":["el tecnico resolvio el problema que habia para instalar el servicio, pero demostro poca claridad o disposicion al contestar nuestras preguntas o dudas","La intermitencia de la Internet"]},{"tecnico":"EGON RODRIGO VILLARROEL ZUNIGA","nps":75,"total":32,"N":4,"D":2,"tags":["Ver comentarios de clientes"],"quotes":["A mis todos conocidos, muy bueno el tecnico, que nos asistio. Muchas gracias","El caballero fue muy amable y 100% recomendable"]}]},"conclusiones":["\u003cstrong\u003eTendencia del mes:\u003c/strong\u003e el NPS paso de 73.7% (semana 1) a 88.9% (semana 5), con una pendiente promedio de +3.8 pts NPS por semana.","\u003cstrong\u003eRepa como palanca de mejora:\u003c/strong\u003e con 77.7% vs 90.3% de Instala, priorizar auditorias de calidad y refuerzo de capacitacion en ese protocolo (brecha de 12.6 pts).","\u003cstrong\u003eCoaching dirigido:\u003c/strong\u003e priorizar retroalimentacion 1:1 con Gonzalo Rodrigo Carcamo Maldonado, Victor Hugo Barria Almonacid, Luis Alfonso Torres Millaquen, Egon Rodrigo Villarroel Zuniga, cuyos comentarios apuntan a causas concretas y accionables.","\u003cstrong\u003eReconocimiento y buenas practicas:\u003c/strong\u003e Carlos Roberto Saldivia Hernandez, Rene Eduardo Mayorga Leuquen, Eduardo Andres Witto Mansilla, Jose Alexis Barria Almonacid cerraron el mes sin detractores (o casi) pese a buen volumen -- usarlos como referentes en instancias de capacitacion interna.","\u003cstrong\u003eTasa de respuesta (32.3%):\u003c/strong\u003e evaluar canal y timing de envio de la encuesta para mejorar la representatividad estadistica, especialmente en tecnicos con pocas respuestas."],"generadoEl":"2026-08-05 19:43"};
+const DATA = {"periodo":"Julio 2026","zona":"Punta Arenas y Coyhaique","meta":86,"enviadas":1090,"respondidas":342,"promotores":302,"neutros":26,"detractores":14,"nps":84.2,"daily":[{"dia":1,"P":6,"N":0,"D":1,"total":7,"nps":71.4},{"dia":2,"P":12,"N":1,"D":0,"total":13,"nps":92.3},{"dia":3,"P":8,"N":2,"D":0,"total":10,"nps":80},{"dia":4,"P":7,"N":0,"D":2,"total":9,"nps":55.6},{"dia":6,"P":11,"N":3,"D":1,"total":15,"nps":66.7},{"dia":7,"P":12,"N":1,"D":1,"total":14,"nps":78.6},{"dia":8,"P":14,"N":1,"D":1,"total":16,"nps":81.2},{"dia":9,"P":19,"N":0,"D":1,"total":20,"nps":90},{"dia":10,"P":14,"N":0,"D":0,"total":14,"nps":100},{"dia":11,"P":8,"N":0,"D":1,"total":9,"nps":77.8},{"dia":13,"P":10,"N":0,"D":0,"total":10,"nps":100},{"dia":14,"P":10,"N":1,"D":1,"total":12,"nps":75},{"dia":15,"P":13,"N":2,"D":0,"total":15,"nps":86.7},{"dia":17,"P":13,"N":0,"D":1,"total":14,"nps":85.7},{"dia":18,"P":9,"N":1,"D":0,"total":10,"nps":90},{"dia":20,"P":12,"N":2,"D":1,"total":15,"nps":73.3},{"dia":21,"P":12,"N":1,"D":1,"total":14,"nps":78.6},{"dia":22,"P":20,"N":1,"D":0,"total":21,"nps":95.2},{"dia":23,"P":13,"N":1,"D":0,"total":14,"nps":92.9},{"dia":24,"P":8,"N":1,"D":0,"total":9,"nps":88.9},{"dia":25,"P":7,"N":2,"D":1,"total":10,"nps":60},{"dia":27,"P":11,"N":2,"D":0,"total":13,"nps":84.6},{"dia":28,"P":15,"N":1,"D":0,"total":16,"nps":93.8},{"dia":29,"P":14,"N":0,"D":1,"total":15,"nps":86.7},{"dia":30,"P":14,"N":1,"D":0,"total":15,"nps":93.3},{"dia":31,"P":10,"N":2,"D":0,"total":12,"nps":83.3}],"weekly":[{"semana":1,"P":56,"N":7,"D":5,"total":68,"nps":75},{"semana":2,"P":75,"N":2,"D":4,"total":81,"nps":87.7},{"semana":3,"P":59,"N":6,"D":3,"total":68,"nps":82.4},{"semana":4,"P":74,"N":8,"D":1,"total":83,"nps":88},{"semana":5,"P":38,"N":3,"D":1,"total":42,"nps":88.1}],"tipo":[{"tipo":"Repa","P":158,"N":20,"D":10,"total":188,"nps":78.7},{"tipo":"Instala","P":144,"N":6,"D":4,"total":154,"nps":90.9}],"zonas":[{"zona":"Punta Arenas","P":254,"N":23,"D":13,"total":290,"nps":83.1,"metaGap":-2.9},{"zona":"Coyhaique","P":48,"N":3,"D":1,"total":52,"nps":90.4,"metaGap":4.4}],"tecnicos":[{"tecnico":"EGON RODRIGO VILLARROEL ZUNIGA","P":26,"N":4,"D":2,"total":32,"nps":75},{"tecnico":"JULIO LOPEZ CORTES","P":23,"N":0,"D":1,"total":24,"nps":91.7},{"tecnico":"JUAN CARLOS ULLOA MORAGA","P":15,"N":1,"D":1,"total":17,"nps":82.4},{"tecnico":"AXEL LEONARDO ALFARO ALVAREZ","P":25,"N":3,"D":0,"total":28,"nps":89.3},{"tecnico":"JOSE ALEXIS BARRIA ALMONACID","P":29,"N":3,"D":0,"total":32,"nps":90.6},{"tecnico":"CARLOS ALFONSO PINTO AGUILAR","P":6,"N":0,"D":0,"total":6,"nps":100},{"tecnico":"CARLOS ROBERTO SALDIVIA HERNANDEZ","P":13,"N":0,"D":0,"total":13,"nps":100},{"tecnico":"VICTOR HUGO BARRIA ALMONACID","P":20,"N":3,"D":2,"total":25,"nps":72},{"tecnico":"LUIS ALFONSO TORRES MILLAQUEN","P":25,"N":2,"D":3,"total":30,"nps":73.3},{"tecnico":"RENE EDUARDO MAYORGA LEUQUEN","P":11,"N":0,"D":0,"total":11,"nps":100},{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","P":24,"N":1,"D":0,"total":25,"nps":96},{"tecnico":"RODRIGO EDUARDO GODOY CARCAMO","P":25,"N":4,"D":0,"total":29,"nps":86.2},{"tecnico":"GABRIEL LEONIDAS RAMIREZ IBARRA","P":14,"N":2,"D":1,"total":17,"nps":76.5},{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","P":22,"N":2,"D":3,"total":27,"nps":70.4},{"tecnico":"FELIPE ANTONIO RIOS CIFUENTES","P":24,"N":1,"D":1,"total":26,"nps":88.5}],"highlights":{"top":[{"tecnico":"CARLOS ROBERTO SALDIVIA HERNANDEZ","nps":100,"total":13,"N":0,"D":0,"tags":["Cero friccion reportada"],"quotes":["El ejecutivo muy educado, se presenta y explica raz\u0027on de la visita. Resolvio el problema de inmediato."]},{"tecnico":"RENE EDUARDO MAYORGA LEUQUEN","nps":100,"total":11,"N":0,"D":0,"tags":["Cero friccion reportada"],"quotes":["Persona amable, trabajo impecable y con paciencia para contestar cualquier pregunta respecto al trabajo que esta realizando."]},{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","nps":96,"total":25,"N":1,"D":0,"tags":["Buen volumen + consistencia"],"quotes":["El tecnico nada que decir Solo me quedo una duda ya que indica que el no estaba capacitado para mover una cajita de donde sale el cable hacia el route"]},{"tecnico":"JOSE ALEXIS BARRIA ALMONACID","nps":90.6,"total":32,"N":3,"D":0,"tags":["Mayor volumen del equipo, sin detractores"],"quotes":["Destaco la rapidez, de un dia para otro ya estaba el tecnico en mi casa, dejo todo en orden y funcional."]}],"bottom":[{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","nps":70.4,"total":27,"N":2,"D":3,"tags":["Orden/limpieza post-trabajo"],"quotes":["Todos los residuos del trabajo realizado se los debe llevar el tecnico","El tecnico muy bien pero realmente mala lamprataforma de movistar"]},{"tecnico":"VICTOR HUGO BARRIA ALMONACID","nps":72,"total":25,"N":3,"D":2,"tags":["Tiempos de respuesta"],"quotes":["Lo que deberian mejorar es tener mayor rapidez al solucionar el problema... en mi caso estuve 2 dias sin Internet ni television","mejorar los tiempos de visita del tecnico, ya que estuve 3 dias sin el servicio Porque no tenian disponibilidad."]},{"tecnico":"LUIS ALFONSO TORRES MILLAQUEN","nps":73.3,"total":30,"N":2,"D":3,"tags":["Claridad al explicar la solucion","Calidad tecnica (falla persiste)"],"quotes":["el tecnico resolvio el problema que habia para instalar el servicio, pero demostro poca claridad o disposicion al contestar nuestras preguntas o dudas","La intermitencia de la Internet"]},{"tecnico":"EGON RODRIGO VILLARROEL ZUNIGA","nps":75,"total":32,"N":4,"D":2,"tags":["Ver comentarios de clientes"],"quotes":["A mis todos conocidos, muy bueno el tecnico, que nos asistio. Muchas gracias","El caballero fue muy amable y 100% recomendable"]}]},"conclusiones":["\u003cstrong\u003eTendencia del mes:\u003c/strong\u003e el NPS paso de 75% (semana 1) a 88.1% (semana 5), con una pendiente promedio de +3.3 pts NPS por semana.","\u003cstrong\u003eMeta (86%):\u003c/strong\u003e el NPS general de 84.2% esta 1.8 pts bajo la meta. Punta Arenas (83.1%) todavia no la alcanza -- priorizar ahi el seguimiento.","\u003cstrong\u003eRepa como palanca de mejora:\u003c/strong\u003e con 78.7% vs 90.9% de Instala, priorizar auditorias de calidad y refuerzo de capacitacion en ese protocolo (brecha de 12.2 pts).","\u003cstrong\u003eCoaching dirigido:\u003c/strong\u003e priorizar retroalimentacion 1:1 con Gonzalo Rodrigo Carcamo Maldonado, Victor Hugo Barria Almonacid, Luis Alfonso Torres Millaquen, Egon Rodrigo Villarroel Zuniga, cuyos comentarios apuntan a causas concretas y accionables.","\u003cstrong\u003eReconocimiento y buenas practicas:\u003c/strong\u003e Carlos Roberto Saldivia Hernandez, Rene Eduardo Mayorga Leuquen, Eduardo Andres Witto Mansilla, Jose Alexis Barria Almonacid cerraron el mes sin detractores (o casi) pese a buen volumen -- usarlos como referentes en instancias de capacitacion interna.","\u003cstrong\u003eTasa de respuesta (31.4%):\u003c/strong\u003e evaluar canal y timing de envio de la encuesta para mejorar la representatividad estadistica, especialmente en tecnicos con pocas respuestas."],"generadoEl":"2026-08-05 20:05"};
 
 function fmt1(n){ return (Math.round(n*10)/10).toFixed(1).replace('.0','').length ? (Math.round(n*10)/10) : n; }
 function npsClass(v){ return v>=85?'hi':(v>=75?'mid':'lo'); }
 function titleCase(s){ return s.split(' ').map(w=>w?w[0]+w.slice(1).toLowerCase():w).join(' '); }
 
-// ---- Meta row ----
+// ---- Hero subtitle + meta row ----
+document.getElementById('heroSubtitle').textContent =
+  `Net Promoter Score de las intervenciones técnicas realizadas por COBRA (${DATA.zona}), a partir de las encuestas de satisfacción post-servicio. Incluye evolución diaria/semanal, desglose por zona, proyección de tendencia y análisis individual de técnicos.`;
 document.getElementById('metaRow').innerHTML = `
   <span>📅 Periodo analizado: <b>${DATA.periodo}</b></span>
   <span>📍 Zona: <b>${DATA.zona}</b></span>
@@ -208,8 +223,12 @@ document.getElementById('metaRow').innerHTML = `
 
 // ---- KPI cards ----
 const tasaRespuesta = (DATA.respondidas / DATA.enviadas * 100).toFixed(1);
+const metaGap = +(DATA.nps - DATA.meta).toFixed(1);
+const metaSub = metaGap >= 0
+  ? `<span style="color:var(--promotor)">▲ ${metaGap} pts sobre la meta (${DATA.meta}%)</span>`
+  : `<span style="color:var(--detractor)">▼ ${Math.abs(metaGap)} pts bajo la meta (${DATA.meta}%)</span>`;
 document.getElementById('kpiGrid').innerHTML = `
-  <div class="kpi-card"><div class="label">NPS General</div><div class="value nps">${DATA.nps}%</div><div class="sub">Sobre ${DATA.respondidas} encuestas respondidas</div></div>
+  <div class="kpi-card"><div class="label">NPS General</div><div class="value nps">${DATA.nps}%</div><div class="sub">${metaSub}</div></div>
   <div class="kpi-card"><div class="label">Tasa de respuesta</div><div class="value">${tasaRespuesta}%</div><div class="sub">${DATA.respondidas} de ${DATA.enviadas} encuestas enviadas</div></div>
   <div class="kpi-card"><div class="label">Promotores</div><div class="value" style="color:var(--promotor)">${DATA.promotores}</div><div class="sub">${(DATA.promotores/DATA.respondidas*100).toFixed(1)}% de los respondidos</div></div>
   <div class="kpi-card"><div class="label">Neutros</div><div class="value" style="color:var(--neutro)">${DATA.neutros}</div><div class="sub">${(DATA.neutros/DATA.respondidas*100).toFixed(1)}% de los respondidos</div></div>
@@ -244,7 +263,8 @@ new Chart(document.getElementById('chartDiario'), {
     labels: DATA.daily.map(d=>'Día '+d.dia),
     datasets: [
       { label:'NPS diario (%)', data: DATA.daily.map(d=>d.nps), borderColor:'#29a9e0', backgroundColor:'rgba(41,169,224,0.14)', fill:true, tension:0.35, pointRadius:3, pointBackgroundColor:'#29a9e0', yAxisID:'y' },
-      { label:'Volumen de encuestas', data: DATA.daily.map(d=>d.total), type:'bar', backgroundColor:'rgba(0,60,113,0.18)', borderRadius:4, yAxisID:'y1' }
+      { label:'Volumen de encuestas', data: DATA.daily.map(d=>d.total), type:'bar', backgroundColor:'rgba(0,60,113,0.18)', borderRadius:4, yAxisID:'y1' },
+      { label:'Meta ('+DATA.meta+'%)', data: DATA.daily.map(()=>DATA.meta), borderColor:'#e2523e', borderDash:[5,4], borderWidth:1.5, pointRadius:0, fill:false, tension:0, yAxisID:'y' }
     ]
   },
   options: {
@@ -269,7 +289,25 @@ new Chart(document.getElementById('chartSemanal'), {
     datasets: [
       { label:'NPS semanal real', data: weekActual, backgroundColor:'rgba(0,113,206,0.85)', borderRadius:6, maxBarThickness:46 },
       { label:'Proyección', data: weekLabels.map((_,i)=> i===weekLabels.length-1 ? projValue : null), backgroundColor:'rgba(41,169,224,0.55)', borderRadius:6, maxBarThickness:46 },
-      { label:'Tendencia (regresión lineal)', data: trendLine, type:'line', borderColor:'#e2962e', borderDash:[6,4], pointRadius:0, tension:0 }
+      { label:'Tendencia (regresión lineal)', data: trendLine, type:'line', borderColor:'#e2962e', borderDash:[6,4], pointRadius:0, tension:0 },
+      { label:'Meta ('+DATA.meta+'%)', data: weekLabels.map(()=>DATA.meta), type:'line', borderColor:'#e2523e', borderDash:[5,4], borderWidth:1.5, pointRadius:0, tension:0 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position:'top', labels:{boxWidth:10} } },
+    scales: { y: { min:0, max:100, title:{display:true,text:'NPS %'}, grid:{color:'rgba(20,50,80,0.06)'} } }
+  }
+});
+
+// ---- Chart Zona: Punta Arenas vs Coyhaique (u otras) ----
+new Chart(document.getElementById('chartZona'), {
+  type: 'bar',
+  data: {
+    labels: DATA.zonas.map(z=>z.zona),
+    datasets: [
+      { label:'NPS por zona', data: DATA.zonas.map(z=>z.nps), backgroundColor: DATA.zonas.map(z=> z.nps>=DATA.meta ? 'rgba(31,169,113,0.85)' : 'rgba(226,82,62,0.85)'), borderRadius:6, maxBarThickness:60 },
+      { label:'Meta ('+DATA.meta+'%)', data: DATA.zonas.map(()=>DATA.meta), type:'line', borderColor:'#e2523e', borderDash:[5,4], borderWidth:1.5, pointRadius:0, tension:0 }
     ]
   },
   options: {
@@ -310,6 +348,19 @@ const primera = DATA.weekly[0], ultima = DATA.weekly[DATA.weekly.length-1];
 const pendiente = ((ultima.nps - primera.nps) / (DATA.weekly.length - 1)).toFixed(1);
 document.getElementById('proyeccionCallout').innerHTML =
   `<b>Proyección semana ${projSemana} (trend lineal):</b> ~${Math.max(0,projValue-1).toFixed(0)}–${Math.min(100,projValue+1).toFixed(0)}% NPS si se mantiene el ritmo de mejora actual (${pendiente>=0?'+':''}${pendiente} pts NPS por semana en promedio).`;
+
+// ---- Table: Zona ----
+let rowsZona = '<tr><th>Zona</th><th>NPS</th><th>vs. Meta</th><th>Encuestas</th></tr>';
+DATA.zonas.slice().sort((a,b)=>b.nps-a.nps).forEach(z=>{
+  const gap = +(z.nps - DATA.meta).toFixed(1);
+  const gapTxt = gap>=0 ? `<span style="color:var(--promotor)">+${gap}</span>` : `<span style="color:var(--detractor)">${gap}</span>`;
+  rowsZona += `<tr><td>${z.zona}</td><td><span class="badge ${npsClass(z.nps)}">${z.nps}%</span></td><td>${gapTxt}</td><td>${z.total}</td></tr>`;
+});
+document.getElementById('tablaZona').innerHTML = rowsZona;
+const zonasBajoMeta = DATA.zonas.filter(z=>z.nps < DATA.meta);
+document.getElementById('zonaCallout').innerHTML = zonasBajoMeta.length
+  ? `<b>Bajo meta:</b> ${zonasBajoMeta.map(z=>`${z.zona} (${z.nps}%)`).join(' y ')} todavía no alcanza el ${DATA.meta}% institucional.`
+  : `<b>Todas las zonas sobre la meta</b> de ${DATA.meta}% este mes.`;
 
 // ---- Table: Tipo ----
 let rowsTipo = '<tr><th>Tipo</th><th>NPS</th><th>Encuestas</th><th>Detractores</th></tr>';
@@ -358,7 +409,7 @@ document.getElementById('recList').innerHTML = DATA.conclusiones.map((c,i)=>`
 
 // ---- Footer ----
 document.getElementById('footerText').innerHTML =
-  `Informe generado a partir de NPS_GENERAL.xlsm (hoja BBDD) · Filtro: Colaborador = COBRA, Estado = ACTIVO, Duplicado = 0 · ${DATA.periodo} · Generado ${DATA.generadoEl}`;
+  `Informe generado a partir de NPS_GENERAL.xlsm (hoja BBDD) · Filtro: Colaborador = COBRA/SATNET, Estado = ACTIVO, Duplicado = 0 · ${DATA.periodo} · Generado ${DATA.generadoEl}`;
 </script>
 
 </body>
