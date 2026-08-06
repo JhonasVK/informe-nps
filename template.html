@@ -152,7 +152,7 @@
 
 <header class="hero">
   <div class="brand-row">
-    <img src="logo-cobra.png" alt="Cobra">
+    <img id="logoImg" src="logo-cobra.png" alt="Cobra">
     <div class="brand-divider"></div>
     <div class="eyebrow">Calidad &amp; Capacitación · Reporte de Satisfacción</div>
   </div>
@@ -246,6 +246,9 @@ const DATA = /*__DATA__*/;
 function fmt1(n){ return (Math.round(n*10)/10).toFixed(1).replace('.0','').length ? (Math.round(n*10)/10) : n; }
 function npsClass(v){ return v>=85?'hi':(v>=75?'mid':'lo'); }
 function titleCase(s){ return s.split(' ').map(w=>w?w[0]+w.slice(1).toLowerCase():w).join(' '); }
+
+// ---- Logo (ruta absoluta: la misma pagina se sirve tanto en la raiz como en /AAAA-MM/) ----
+if (DATA.basePath) { document.getElementById('logoImg').src = DATA.basePath + '/logo-cobra.png'; }
 
 // ---- Hero subtitle + meta row ----
 document.getElementById('heroSubtitle').textContent =
