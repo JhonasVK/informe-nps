@@ -271,8 +271,16 @@ Get-ChildItem -Path $RepoDir -Directory -ErrorAction SilentlyContinue | Where-Ob
 $archivos = @($mesesDisponibles | Sort-Object -Descending | ForEach-Object {
     $partes = $_ -split '-'
     $a = [int]$partes[0]; $m = [int]$partes[1]
-    [pscustomobject]@{ slug=$_; label="$($MESES_ES[$m]) $a"; url="$BasePath/$_/"; actual=($_ -eq $periodoSlug) }
+    [pscustomobject]@{ slug=$_; label="$($MESES_ES[$m]) $a"; url="$BasePath/$_/" }
 })
+
+# meses.json vive en la raiz del repo y se sobreescribe COMPLETO en cada corrida.
+# El template lo consulta en vivo (fetch) en vez de usar el DATA embebido de cada
+# pagina, porque una pagina archivada (ej. 2026-07/index.html) no se vuelve a tocar
+# despues de generarse -- si el historial quedara embebido ahi, julio nunca se
+# enteraria de que agosto existe.
+$MesesJsonPath = Join-Path $RepoDir "meses.json"
+($archivos | ConvertTo-Json -Depth 3 -Compress) | Set-Content -Path $MesesJsonPath -Encoding UTF8 -NoNewline
 
 # ---------- 9. Construir DATA y generar index.html ----------
 $zonaLabel = ($zonas | ForEach-Object { $_.zona }) -join ' y '
@@ -314,7 +322,7 @@ Write-Host "==> Archivado en $periodoSlug/index.html"
 # ---------- 10. Commit y push ----------
 Push-Location $RepoDir
 try {
-    git add index.html "$periodoSlug/index.html" | Out-Null
+    git add index.html "$periodoSlug/index.html" meses.json | Out-Null
     $diff = git diff --cached --name-only
     if (-not $diff) {
         Write-Host "==> No hay cambios respecto a la ultima publicacion. Nada que subir."

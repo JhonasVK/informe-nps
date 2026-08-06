@@ -261,13 +261,25 @@ document.getElementById('metaRow').innerHTML = `
 `;
 
 // ---- Historial de meses ----
-if (DATA.archivos && DATA.archivos.length > 1) {
-  const pills = DATA.archivos.map(a =>
-    a.actual
+// meses.json se pisa completo en cada corrida del script, asi que se consulta en vivo
+// (fetch) en vez de usar DATA.archivos: una pagina archivada (ej. 2026-07/index.html)
+// nunca se vuelve a regenerar, asi que su DATA embebido quedaria congelado en el
+// historial que existia el dia que se genero.
+function renderArchiveRow(lista) {
+  if (!lista || lista.length < 2) return;
+  const pills = lista.map(a =>
+    a.slug === DATA.periodoSlug
       ? `<span class="archive-pill current">${a.label}</span>`
       : `<a class="archive-pill" href="${a.url}">${a.label}</a>`
   ).join('');
   document.getElementById('archiveRow').innerHTML = `<span class="archive-label">📁 Meses disponibles:</span>${pills}`;
+}
+renderArchiveRow(DATA.archivos); // fallback inmediato mientras llega el fetch
+if (DATA.basePath) {
+  fetch(DATA.basePath + '/meses.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(lista => { if (lista) renderArchiveRow(lista); })
+    .catch(() => {}); // sin conexion o meses.json no existe todavia: se queda con el fallback
 }
 
 // ---- KPI cards ----
