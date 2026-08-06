@@ -1,11 +1,13 @@
 # Genera el informe NPS de COBRA (Punta Arenas + Coyhaique via subcontrato SATNET)
 # a partir de NPS GENERAL.xlsm y lo publica en GitHub Pages.
 # Uso: doble clic en "Actualizar_Informe.bat", o ejecutar este script en PowerShell.
-#      Editar $Mes / $Anio abajo antes de correr para un mes distinto.
+#      Por defecto usa el mes/anio actual. Para regenerar un mes especifico (ej. para
+#      corregir un informe ya archivado), pasar -Mes y -Anio explicitos:
+#      .\actualizar_informe.ps1 -Mes 7 -Anio 2026
 
 param(
-    [int]$Mes = 7,
-    [int]$Anio = 2026,
+    [int]$Mes = (Get-Date).Month,
+    [int]$Anio = (Get-Date).Year,
     [double]$Meta = 86,
     [string[]]$Colaboradores = @('COBRA', 'SATNET')
 )
@@ -88,12 +90,16 @@ $currentRow = $null
 $rowIdx = 0
 $matched = New-Object System.Collections.Generic.List[object]
 $mesStr = "$Mes"
+$mesesDisponiblesEnBBDD = @{}
 
 function Process-Row($r) {
-    if ($Colaboradores -contains $r[28] -and $r[32] -eq 'ACTIVO' -and $r[39] -eq '0' -and $r[26] -eq $mesStr) {
+    if ($Colaboradores -contains $r[28] -and $r[32] -eq 'ACTIVO' -and $r[39] -eq '0') {
         $fechaSerial = [double]$r[11]
         $anioFila = [System.DateTime]::FromOADate($fechaSerial).Year
-        if ($anioFila -ne $Anio) { return }
+        $mesFila = [string]$r[26]
+        $claveMes = "$anioFila-$mesFila"
+        $script:mesesDisponiblesEnBBDD[$claveMes] = ($script:mesesDisponiblesEnBBDD[$claveMes] + 1)
+        if ($mesFila -ne $mesStr -or $anioFila -ne $Anio) { return }
         $script:matched.Add([pscustomobject]@{
             tecnico = [string]$r[6]
             dia     = [int]$r[33]
@@ -129,7 +135,20 @@ $reader.Close()
 $enviadas = $matched.Count
 $respondidas = $matched | Where-Object { $_.nota -ne $null }
 Write-Host "==> Enviadas=$enviadas Respondidas=$($respondidas.Count)"
-if ($respondidas.Count -eq 0) { Write-Host "ERROR: no hay encuestas respondidas para ese periodo/filtro." -ForegroundColor Red; exit 1 }
+if ($respondidas.Count -eq 0) {
+    Write-Host "ERROR: no hay encuestas respondidas para $($MESES_ES[$Mes]) $Anio con Colaborador=$($Colaboradores -join '/')." -ForegroundColor Red
+    if ($mesesDisponiblesEnBBDD.Count -gt 0) {
+        Write-Host "Meses que SI tienen datos en la BBDD para ese/esos colaborador(es):" -ForegroundColor Yellow
+        $mesesDisponiblesEnBBDD.GetEnumerator() | Sort-Object Name | ForEach-Object {
+            $partes = $_.Key -split '-'
+            Write-Host "  - $($MESES_ES[[int]$partes[1]]) $($partes[0])  ($($_.Value) filas)"
+        }
+        Write-Host "Volve a correr con, por ejemplo: .\actualizar_informe.ps1 -Mes <mes> -Anio <anio>" -ForegroundColor Yellow
+    } else {
+        Write-Host "No se encontro ninguna fila para Colaborador=$($Colaboradores -join '/') en toda la BBDD." -ForegroundColor Yellow
+    }
+    exit 1
+}
 
 # ---------- 5. Agregados ----------
 function GroupNps($group) {
