@@ -1,12 +1,22 @@
-# Genera el informe NPS de COBRA (Zona Punta Arenas) a partir de NPS GENERAL.xlsm
-# y lo publica en GitHub Pages.
+# Genera el informe NPS de COBRA (Punta Arenas + Coyhaique via subcontrato SATNET)
+# a partir de NPS GENERAL.xlsm y lo publica en GitHub Pages.
 # Uso: doble clic en "Actualizar_Informe.bat", o ejecutar este script en PowerShell.
 #      Editar $Mes / $Anio abajo antes de correr para un mes distinto.
 
 param(
     [int]$Mes = 7,
-    [int]$Anio = 2026
+    [int]$Anio = 2026,
+    [double]$Meta = 86,
+    [string[]]$Colaboradores = @('COBRA', 'SATNET')
 )
+
+# Nombre de zona a mostrar por cada valor crudo de AG_tec en la hoja BBDD.
+# Si aparece una zona nueva no listada aqui, se usa el valor crudo tal cual (con guiones bajos como espacios).
+$ZONA_DISPLAY = @{ 'PUNTA_ARENAS' = 'Punta Arenas'; 'COYHAIQUE' = 'Coyhaique' }
+function Zona-Display($raw) {
+    if ($ZONA_DISPLAY.ContainsKey($raw)) { return $ZONA_DISPLAY[$raw] }
+    return ($raw -replace '_', ' ')
+}
 
 $ErrorActionPreference = "Stop"
 
@@ -80,7 +90,7 @@ $matched = New-Object System.Collections.Generic.List[object]
 $mesStr = "$Mes"
 
 function Process-Row($r) {
-    if ($r[28] -eq 'COBRA' -and $r[32] -eq 'ACTIVO' -and $r[39] -eq '0' -and $r[26] -eq $mesStr) {
+    if ($Colaboradores -contains $r[28] -and $r[32] -eq 'ACTIVO' -and $r[39] -eq '0' -and $r[26] -eq $mesStr) {
         $fechaSerial = [double]$r[11]
         $anioFila = [System.DateTime]::FromOADate($fechaSerial).Year
         if ($anioFila -ne $Anio) { return }
@@ -91,6 +101,7 @@ function Process-Row($r) {
             obs     = if ($r[14] -and [string]$r[14] -ne 'NULL') { [string]$r[14] } else { $null }
             nps     = [string]$r[29]
             tipo    = [string]$r[31]
+            zona    = Zona-Display ([string]$r[34])
         })
     }
 }
@@ -142,6 +153,11 @@ $weekly = @($respondidas | Group-Object -Property { [math]::Ceiling($_.dia/7.0) 
 $tipo = @($respondidas | Group-Object tipo | ForEach-Object {
     $agg = GroupNps $_.Group
     [pscustomobject]@{ tipo=$_.Name; P=$agg.P; N=$agg.N; D=$agg.D; total=$agg.total; nps=$agg.nps }
+})
+
+$zonas = @($respondidas | Group-Object zona | Sort-Object Count -Descending | ForEach-Object {
+    $agg = GroupNps $_.Group
+    [pscustomobject]@{ zona=$_.Name; P=$agg.P; N=$agg.N; D=$agg.D; total=$agg.total; nps=$agg.nps; metaGap=[math]::Round($agg.nps - $Meta, 1) }
 })
 
 $tecnicos = @($respondidas | Group-Object tecnico | Where-Object { $_.Count -ge 5 } | ForEach-Object {
@@ -196,19 +212,57 @@ $brecha = [math]::Round($tipoSorted[0].nps - $tipoSorted[-1].nps, 1)
 $tasaResp = [math]::Round($respondidas.Count / $enviadas * 100, 1)
 $topNombres = ($topHighlights | ForEach-Object { (Get-Culture).TextInfo.ToTitleCase($_.tecnico.ToLower()) }) -join ', '
 $bottomNombres = ($bottomHighlights | ForEach-Object { (Get-Culture).TextInfo.ToTitleCase($_.tecnico.ToLower()) }) -join ', '
+$metaGapGeneral = [math]::Round($npsGeneral - $Meta, 1)
+$zonasBajoMeta = @($zonas | Where-Object { $_.nps -lt $Meta })
+
+$metaGapTexto = if ($metaGapGeneral -ge 0) { "$metaGapGeneral pts sobre la meta" } else { "$([math]::Abs($metaGapGeneral)) pts bajo la meta" }
+$zonasTexto = if ($zonasBajoMeta.Count -gt 0) {
+    $nombresBajoMeta = ($zonasBajoMeta | ForEach-Object { "$($_.zona) ($($_.nps)%)" }) -join ' y '
+    "$nombresBajoMeta todavia no la alcanza -- priorizar ahi el seguimiento."
+} else {
+    "Ambas zonas estan sobre la meta este mes."
+}
+$metaBullet = "<strong>Meta ($Meta%):</strong> el NPS general de $npsGeneral% esta $metaGapTexto. $zonasTexto"
 
 $conclusiones = @(
     "<strong>Tendencia del mes:</strong> el NPS paso de $($primera.nps)% (semana 1) a $($ultima.nps)% (semana $($weekly.Count)), con una pendiente promedio de $(if($pendiente -ge 0){'+'})$pendiente pts NPS por semana."
+    $metaBullet
     "<strong>$($tipoSorted[-1].tipo) como palanca de mejora:</strong> con $($tipoSorted[-1].nps)% vs $($tipoSorted[0].nps)% de $($tipoSorted[0].tipo), priorizar auditorias de calidad y refuerzo de capacitacion en ese protocolo (brecha de $brecha pts)."
     "<strong>Coaching dirigido:</strong> priorizar retroalimentacion 1:1 con $bottomNombres, cuyos comentarios apuntan a causas concretas y accionables."
     "<strong>Reconocimiento y buenas practicas:</strong> $topNombres cerraron el mes sin detractores (o casi) pese a buen volumen -- usarlos como referentes en instancias de capacitacion interna."
     "<strong>Tasa de respuesta ($tasaResp%):</strong> evaluar canal y timing de envio de la encuesta para mejorar la representatividad estadistica, especialmente en tecnicos con pocas respuestas."
 )
 
-# ---------- 8. Construir DATA y generar index.html ----------
+# ---------- 8. Archivo del mes + historial ----------
+# Cada mes se guarda en su propia carpeta (ej. 2026-07/index.html) para que quede
+# disponible aunque luego se genere el informe de otro mes. La raiz (index.html)
+# siempre muestra el ultimo mes generado.
+# BasePath: prefijo absoluto del sitio en GitHub Pages, usado para armar los links
+# del historial. Cambiar solo si el repo se renombra o pasa a otra cuenta.
+$BasePath = "/informe-nps"
+$periodoSlug = "{0:0000}-{1:00}" -f $Anio, $Mes
+$ArchiveDir = Join-Path $RepoDir $periodoSlug
+New-Item -ItemType Directory -Force -Path $ArchiveDir | Out-Null
+$ArchiveOutputPath = Join-Path $ArchiveDir "index.html"
+
+$mesesDisponibles = New-Object System.Collections.Generic.HashSet[string]
+[void]$mesesDisponibles.Add($periodoSlug)
+Get-ChildItem -Path $RepoDir -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^\d{4}-\d{2}$' } | ForEach-Object { [void]$mesesDisponibles.Add($_.Name) }
+
+$archivos = @($mesesDisponibles | Sort-Object -Descending | ForEach-Object {
+    $partes = $_ -split '-'
+    $a = [int]$partes[0]; $m = [int]$partes[1]
+    [pscustomobject]@{ slug=$_; label="$($MESES_ES[$m]) $a"; url="$BasePath/$_/"; actual=($_ -eq $periodoSlug) }
+})
+
+# ---------- 9. Construir DATA y generar index.html ----------
+$zonaLabel = ($zonas | ForEach-Object { $_.zona }) -join ' y '
+
 $data = [ordered]@{
     periodo      = "$($MESES_ES[$Mes]) $Anio"
-    zona         = "Punta Arenas"
+    periodoSlug  = $periodoSlug
+    zona         = $zonaLabel
+    meta         = $Meta
     enviadas     = $enviadas
     respondidas  = $respondidas.Count
     promotores   = $totalP
@@ -218,9 +272,12 @@ $data = [ordered]@{
     daily        = $daily
     weekly       = $weekly
     tipo         = $tipo
+    zonas        = $zonas
     tecnicos     = $tecnicos
     highlights   = [ordered]@{ top=$topHighlights; bottom=$bottomHighlights }
     conclusiones = $conclusiones
+    archivos     = $archivos
+    basePath     = $BasePath
     generadoEl   = (Get-Date -Format "yyyy-MM-dd HH:mm")
 }
 
@@ -231,12 +288,14 @@ if (-not (Test-Path $TemplatePath)) { Write-Host "ERROR: no se encontro template
 $html = Get-Content $TemplatePath -Raw -Encoding UTF8
 $final = $html.Replace('/*__DATA__*/', $json)
 [System.IO.File]::WriteAllText($OutputPath, $final, (New-Object System.Text.UTF8Encoding($false)))
+[System.IO.File]::WriteAllText($ArchiveOutputPath, $final, (New-Object System.Text.UTF8Encoding($false)))
 Write-Host "==> index.html regenerado ($((Get-Item $OutputPath).Length) bytes)"
+Write-Host "==> Archivado en $periodoSlug/index.html"
 
-# ---------- 9. Commit y push ----------
+# ---------- 10. Commit y push ----------
 Push-Location $RepoDir
 try {
-    git add index.html | Out-Null
+    git add index.html "$periodoSlug/index.html" | Out-Null
     $diff = git diff --cached --name-only
     if (-not $diff) {
         Write-Host "==> No hay cambios respecto a la ultima publicacion. Nada que subir."

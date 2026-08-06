@@ -50,6 +50,11 @@
   .subtitle{ color:#3a4a5c; font-size:15px; max-width:660px; line-height:1.55; }
   .meta-row{ display:flex; gap:22px; flex-wrap:wrap; margin-top:22px; font-size:13px; color:#3a4a5c; }
   .meta-row span b{color:var(--cobra-navy);}
+  .archive-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  .archive-row .archive-label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; color:var(--text-dim); margin-right:2px; }
+  .archive-pill{ display:inline-block; font-size:12.5px; font-weight:700; padding:4px 12px; border-radius:20px; text-decoration:none; border:1px solid var(--border); color:var(--cobra-navy); background:#fff; transition:background .15s ease; }
+  .archive-pill:hover{ background:var(--celeste-soft); }
+  .archive-pill.current{ background:var(--cobra-navy); color:#fff; border-color:var(--cobra-navy); cursor:default; }
   main{ padding:36px 6vw 80px; max-width:1280px; margin:0 auto; }
 
   .kpi-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin:-58px 0 34px; position:relative; z-index:2; }
@@ -111,9 +116,39 @@
 
   footer{ text-align:center; padding:26px; color:var(--text-dim); font-size:12px; border-top:1px solid var(--border); }
   canvas{ max-width:100%; }
+
+  .export-pdf-btn{
+    position:fixed; top:18px; right:18px; z-index:50;
+    display:flex; align-items:center; gap:8px;
+    background:var(--cobra-navy); color:#fff; border:none;
+    padding:10px 16px; border-radius:24px; font-size:13.5px; font-weight:700;
+    font-family:inherit; cursor:pointer;
+    box-shadow:0 6px 16px rgba(0,60,113,.28);
+    transition:background .15s ease, transform .15s ease;
+  }
+  .export-pdf-btn:hover{ background:var(--cobra-blue); transform:translateY(-1px); }
+  .export-pdf-btn svg{ width:15px; height:15px; flex:none; }
+  @media (max-width:640px){ .export-pdf-btn span{ display:none; } .export-pdf-btn{ padding:10px; } }
+
+  @media print{
+    .no-print{ display:none !important; }
+    body{ background:#fff; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    header.hero{ background:#fff; border-bottom:2px solid var(--celeste); }
+    header.hero::after{ display:none; }
+    .kpi-grid{ margin-top:14px; }
+    .panel, .kpi-card, .tech-card, .rec-item{ box-shadow:none; border:1px solid var(--border); }
+    section{ break-inside:avoid-page; }
+    .kpi-card, .tech-card, .rec-item{ break-inside:avoid; }
+    .grid-2, .two-col, .perf-grid{ break-inside:avoid; }
+  }
 </style>
 </head>
 <body>
+
+<button class="export-pdf-btn no-print" onclick="window.print()" type="button">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h9l3 3v4"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+  <span>Exportar a PDF</span>
+</button>
 
 <header class="hero">
   <div class="brand-row">
@@ -122,8 +157,9 @@
     <div class="eyebrow">Calidad &amp; Capacitación · Reporte de Satisfacción</div>
   </div>
   <h1>Informe NPS — COBRA</h1>
-  <div class="subtitle">Net Promoter Score de las intervenciones técnicas realizadas por COBRA (Zona Punta Arenas), a partir de las encuestas de satisfacción post-servicio. Incluye evolución diaria/semanal, desglose operativo, proyección de tendencia y análisis individual de técnicos.</div>
+  <div class="subtitle" id="heroSubtitle">Net Promoter Score de las intervenciones técnicas realizadas por COBRA, a partir de las encuestas de satisfacción post-servicio. Incluye evolución diaria/semanal, desglose por zona, proyección de tendencia y análisis individual de técnicos.</div>
   <div class="meta-row" id="metaRow"></div>
+  <div class="archive-row no-print" id="archiveRow"></div>
 </header>
 
 <main>
@@ -139,7 +175,7 @@
     <div class="section-title"><span class="num">02</span><h2>Evolución semanal y proyección</h2></div>
     <p class="section-desc">Agregando por semana se reduce el ruido estadístico. Se aplica una regresión lineal simple sobre las semanas del mes para proyectar el cierre de tendencia hacia la semana siguiente.</p>
     <div class="grid-2">
-      <div class="panel"><canvas id="chartSemanal" height="90"></canvas></div>
+      <div class="panel" style="height:300px;"><canvas id="chartSemanal"></canvas></div>
       <div class="panel">
         <div style="font-size:13px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Detalle semanal</div>
         <table id="tablaSemanal"></table>
@@ -150,7 +186,20 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">03</span><h2>Desglose por tipo de intervención</h2></div>
+    <div class="section-title"><span class="num">03</span><h2>Desglose por zona</h2></div>
+    <p class="section-desc">Comparativa de NPS entre zonas, cada una frente a la meta institucional.</p>
+    <div class="two-col">
+      <div class="panel" style="height:320px;"><canvas id="chartZona"></canvas></div>
+      <div class="panel">
+        <div style="font-size:13px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Lectura por zona</div>
+        <table id="tablaZona"></table>
+        <div class="callout" style="margin-top:16px;" id="zonaCallout"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><span class="num">04</span><h2>Desglose por tipo de intervención</h2></div>
     <p class="section-desc">Comparativa de NPS entre servicios de instalación y reparación.</p>
     <div class="two-col">
       <div class="panel"><canvas id="chartTipo" height="140"></canvas></div>
@@ -163,13 +212,13 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">04</span><h2>Ranking de técnicos (mín. 5 encuestas)</h2></div>
+    <div class="section-title"><span class="num">05</span><h2>Ranking de técnicos (mín. 5 encuestas)</h2></div>
     <p class="section-desc">Ordenado de mayor a menor NPS individual. Base para reconocimiento y para focalizar coaching/capacitación.</p>
     <div class="panel"><table id="tablaTecnicos"></table></div>
   </section>
 
   <section>
-    <div class="section-title"><span class="num">05</span><h2>Mejor y menor desempeño</h2></div>
+    <div class="section-title"><span class="num">06</span><h2>Mejor y menor desempeño</h2></div>
     <p class="section-desc">Cruce del ranking con las observaciones textuales que dejaron los clientes, para identificar la causa raíz detrás del número — no solo el puntaje.</p>
     <div class="perf-grid">
       <div>
@@ -184,7 +233,7 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">06</span><h2>Conclusiones y recomendaciones</h2></div>
+    <div class="section-title"><span class="num">07</span><h2>Conclusiones y recomendaciones</h2></div>
     <div class="rec-list" id="recList"></div>
   </section>
 </main>
@@ -198,7 +247,9 @@ function fmt1(n){ return (Math.round(n*10)/10).toFixed(1).replace('.0','').lengt
 function npsClass(v){ return v>=85?'hi':(v>=75?'mid':'lo'); }
 function titleCase(s){ return s.split(' ').map(w=>w?w[0]+w.slice(1).toLowerCase():w).join(' '); }
 
-// ---- Meta row ----
+// ---- Hero subtitle + meta row ----
+document.getElementById('heroSubtitle').textContent =
+  `Net Promoter Score de las intervenciones técnicas realizadas por COBRA (${DATA.zona}), a partir de las encuestas de satisfacción post-servicio. Incluye evolución diaria/semanal, desglose por zona, proyección de tendencia y análisis individual de técnicos.`;
 document.getElementById('metaRow').innerHTML = `
   <span>📅 Periodo analizado: <b>${DATA.periodo}</b></span>
   <span>📍 Zona: <b>${DATA.zona}</b></span>
@@ -206,10 +257,24 @@ document.getElementById('metaRow').innerHTML = `
   <span>🧮 Fórmula: <b>(Promotores − Detractores) / Total respondidas</b></span>
 `;
 
+// ---- Historial de meses ----
+if (DATA.archivos && DATA.archivos.length > 1) {
+  const pills = DATA.archivos.map(a =>
+    a.actual
+      ? `<span class="archive-pill current">${a.label}</span>`
+      : `<a class="archive-pill" href="${a.url}">${a.label}</a>`
+  ).join('');
+  document.getElementById('archiveRow').innerHTML = `<span class="archive-label">📁 Meses disponibles:</span>${pills}`;
+}
+
 // ---- KPI cards ----
 const tasaRespuesta = (DATA.respondidas / DATA.enviadas * 100).toFixed(1);
+const metaGap = +(DATA.nps - DATA.meta).toFixed(1);
+const metaSub = metaGap >= 0
+  ? `<span style="color:var(--promotor)">▲ ${metaGap} pts sobre la meta (${DATA.meta}%)</span>`
+  : `<span style="color:var(--detractor)">▼ ${Math.abs(metaGap)} pts bajo la meta (${DATA.meta}%)</span>`;
 document.getElementById('kpiGrid').innerHTML = `
-  <div class="kpi-card"><div class="label">NPS General</div><div class="value nps">${DATA.nps}%</div><div class="sub">Sobre ${DATA.respondidas} encuestas respondidas</div></div>
+  <div class="kpi-card"><div class="label">NPS General</div><div class="value nps">${DATA.nps}%</div><div class="sub">${metaSub}</div></div>
   <div class="kpi-card"><div class="label">Tasa de respuesta</div><div class="value">${tasaRespuesta}%</div><div class="sub">${DATA.respondidas} de ${DATA.enviadas} encuestas enviadas</div></div>
   <div class="kpi-card"><div class="label">Promotores</div><div class="value" style="color:var(--promotor)">${DATA.promotores}</div><div class="sub">${(DATA.promotores/DATA.respondidas*100).toFixed(1)}% de los respondidos</div></div>
   <div class="kpi-card"><div class="label">Neutros</div><div class="value" style="color:var(--neutro)">${DATA.neutros}</div><div class="sub">${(DATA.neutros/DATA.respondidas*100).toFixed(1)}% de los respondidos</div></div>
@@ -244,7 +309,8 @@ new Chart(document.getElementById('chartDiario'), {
     labels: DATA.daily.map(d=>'Día '+d.dia),
     datasets: [
       { label:'NPS diario (%)', data: DATA.daily.map(d=>d.nps), borderColor:'#29a9e0', backgroundColor:'rgba(41,169,224,0.14)', fill:true, tension:0.35, pointRadius:3, pointBackgroundColor:'#29a9e0', yAxisID:'y' },
-      { label:'Volumen de encuestas', data: DATA.daily.map(d=>d.total), type:'bar', backgroundColor:'rgba(0,60,113,0.18)', borderRadius:4, yAxisID:'y1' }
+      { label:'Volumen de encuestas', data: DATA.daily.map(d=>d.total), type:'bar', backgroundColor:'rgba(0,60,113,0.18)', borderRadius:4, yAxisID:'y1' },
+      { label:'Meta ('+DATA.meta+'%)', data: DATA.daily.map(()=>DATA.meta), borderColor:'#e2523e', borderDash:[5,4], borderWidth:1.5, pointRadius:0, fill:false, tension:0, yAxisID:'y' }
     ]
   },
   options: {
@@ -269,11 +335,31 @@ new Chart(document.getElementById('chartSemanal'), {
     datasets: [
       { label:'NPS semanal real', data: weekActual, backgroundColor:'rgba(0,113,206,0.85)', borderRadius:6, maxBarThickness:46 },
       { label:'Proyección', data: weekLabels.map((_,i)=> i===weekLabels.length-1 ? projValue : null), backgroundColor:'rgba(41,169,224,0.55)', borderRadius:6, maxBarThickness:46 },
-      { label:'Tendencia (regresión lineal)', data: trendLine, type:'line', borderColor:'#e2962e', borderDash:[6,4], pointRadius:0, tension:0 }
+      { label:'Tendencia (regresión lineal)', data: trendLine, type:'line', borderColor:'#e2962e', borderDash:[6,4], pointRadius:0, tension:0 },
+      { label:'Meta ('+DATA.meta+'%)', data: weekLabels.map(()=>DATA.meta), type:'line', borderColor:'#e2523e', borderDash:[5,4], borderWidth:1.5, pointRadius:0, tension:0 }
     ]
   },
   options: {
     responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position:'top', labels:{boxWidth:10} } },
+    scales: { y: { min:0, max:100, title:{display:true,text:'NPS %'}, grid:{color:'rgba(20,50,80,0.06)'} } }
+  }
+});
+
+// ---- Chart Zona: Punta Arenas vs Coyhaique (u otras) ----
+new Chart(document.getElementById('chartZona'), {
+  type: 'bar',
+  data: {
+    labels: DATA.zonas.map(z=>z.zona),
+    datasets: [
+      { label:'NPS por zona', data: DATA.zonas.map(z=>z.nps), backgroundColor: DATA.zonas.map(z=> z.nps>=DATA.meta ? 'rgba(31,169,113,0.85)' : 'rgba(226,82,62,0.85)'), borderRadius:6, maxBarThickness:60 },
+      { label:'Meta ('+DATA.meta+'%)', data: DATA.zonas.map(()=>DATA.meta), type:'line', borderColor:'#e2523e', borderDash:[5,4], borderWidth:1.5, pointRadius:0, tension:0 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: { legend: { position:'top', labels:{boxWidth:10} } },
     scales: { y: { min:0, max:100, title:{display:true,text:'NPS %'}, grid:{color:'rgba(20,50,80,0.06)'} } }
   }
@@ -310,6 +396,19 @@ const primera = DATA.weekly[0], ultima = DATA.weekly[DATA.weekly.length-1];
 const pendiente = ((ultima.nps - primera.nps) / (DATA.weekly.length - 1)).toFixed(1);
 document.getElementById('proyeccionCallout').innerHTML =
   `<b>Proyección semana ${projSemana} (trend lineal):</b> ~${Math.max(0,projValue-1).toFixed(0)}–${Math.min(100,projValue+1).toFixed(0)}% NPS si se mantiene el ritmo de mejora actual (${pendiente>=0?'+':''}${pendiente} pts NPS por semana en promedio).`;
+
+// ---- Table: Zona ----
+let rowsZona = '<tr><th>Zona</th><th>NPS</th><th>vs. Meta</th><th>Encuestas</th></tr>';
+DATA.zonas.slice().sort((a,b)=>b.nps-a.nps).forEach(z=>{
+  const gap = +(z.nps - DATA.meta).toFixed(1);
+  const gapTxt = gap>=0 ? `<span style="color:var(--promotor)">+${gap}</span>` : `<span style="color:var(--detractor)">${gap}</span>`;
+  rowsZona += `<tr><td>${z.zona}</td><td><span class="badge ${npsClass(z.nps)}">${z.nps}%</span></td><td>${gapTxt}</td><td>${z.total}</td></tr>`;
+});
+document.getElementById('tablaZona').innerHTML = rowsZona;
+const zonasBajoMeta = DATA.zonas.filter(z=>z.nps < DATA.meta);
+document.getElementById('zonaCallout').innerHTML = zonasBajoMeta.length
+  ? `<b>Bajo meta:</b> ${zonasBajoMeta.map(z=>`${z.zona} (${z.nps}%)`).join(' y ')} todavía no alcanza el ${DATA.meta}% institucional.`
+  : `<b>Todas las zonas sobre la meta</b> de ${DATA.meta}% este mes.`;
 
 // ---- Table: Tipo ----
 let rowsTipo = '<tr><th>Tipo</th><th>NPS</th><th>Encuestas</th><th>Detractores</th></tr>';
@@ -358,7 +457,7 @@ document.getElementById('recList').innerHTML = DATA.conclusiones.map((c,i)=>`
 
 // ---- Footer ----
 document.getElementById('footerText').innerHTML =
-  `Informe generado a partir de NPS_GENERAL.xlsm (hoja BBDD) · Filtro: Colaborador = COBRA, Estado = ACTIVO, Duplicado = 0 · ${DATA.periodo} · Generado ${DATA.generadoEl}`;
+  `Informe generado a partir de NPS_GENERAL.xlsm (hoja BBDD) · Filtro: Colaborador = COBRA/SATNET, Estado = ACTIVO, Duplicado = 0 · ${DATA.periodo} · Generado ${DATA.generadoEl}`;
 </script>
 
 </body>
