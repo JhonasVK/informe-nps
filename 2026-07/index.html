@@ -261,13 +261,21 @@ document.getElementById('metaRow').innerHTML = `
 `;
 
 // ---- Historial de meses ----
-if (DATA.archivos && DATA.archivos.length > 1) {
-  const pills = DATA.archivos.map(a =>
-    a.actual
+function renderArchiveRow(lista) {
+  if (!lista || lista.length < 2) return;
+  const pills = lista.map(a =>
+    a.slug === DATA.periodoSlug
       ? `<span class="archive-pill current">${a.label}</span>`
       : `<a class="archive-pill" href="${a.url}">${a.label}</a>`
   ).join('');
   document.getElementById('archiveRow').innerHTML = `<span class="archive-label">📁 Meses disponibles:</span>${pills}`;
+}
+renderArchiveRow(DATA.archivos);
+if (DATA.basePath) {
+  fetch(DATA.basePath + '/meses.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(lista => { if (lista) renderArchiveRow(lista); })
+    .catch(() => {});
 }
 
 // ---- KPI cards ----
