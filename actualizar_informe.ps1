@@ -179,6 +179,13 @@ $zonas = @($respondidas | Group-Object zona | Sort-Object Count -Descending | Fo
     [pscustomobject]@{ zona=$_.Name; P=$agg.P; N=$agg.N; D=$agg.D; total=$agg.total; nps=$agg.nps; metaGap=[math]::Round($agg.nps - $Meta, 1) }
 })
 
+# Cruce zona x tipo (Instala/Repara), para la tabla de detalle con total + apertura por servicio.
+$zonaTipo = @($respondidas | Group-Object zona, tipo | ForEach-Object {
+    $agg = GroupNps $_.Group
+    $partes = $_.Name -split ', '
+    [pscustomobject]@{ zona=$partes[0]; tipo=$partes[1]; P=$agg.P; N=$agg.N; D=$agg.D; total=$agg.total; nps=$agg.nps; metaGap=[math]::Round($agg.nps - $Meta, 1) }
+})
+
 $tecnicos = @($respondidas | Group-Object tecnico | Where-Object { $_.Count -ge 5 } | ForEach-Object {
     $agg = GroupNps $_.Group
     [pscustomobject]@{ tecnico=$_.Name; P=$agg.P; N=$agg.N; D=$agg.D; total=$agg.total; nps=$agg.nps }
@@ -300,6 +307,7 @@ $data = [ordered]@{
     weekly       = $weekly
     tipo         = $tipo
     zonas        = $zonas
+    zonaTipo     = $zonaTipo
     tecnicos     = $tecnicos
     highlights   = [ordered]@{ top=$topHighlights; bottom=$bottomHighlights }
     conclusiones = $conclusiones

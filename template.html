@@ -78,6 +78,9 @@
   th{ text-align:left; color:var(--text-dim); font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; padding:10px 10px; border-bottom:1px solid var(--border); }
   td{ padding:10px; border-bottom:1px solid var(--panel-2); }
   tr:hover td{ background:var(--panel-2); }
+  tr.row-total td{ font-weight:700; background:var(--panel-2); }
+  tr.row-total td:first-child{ color:var(--cobra-navy); }
+  tr.row-sub td:first-child{ color:var(--text-dim); padding-left:26px; font-size:12.5px; }
   .badge{ display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:700; }
   .badge.hi{ background:rgba(31,169,113,.12); color:var(--promotor); }
   .badge.mid{ background:rgba(226,150,46,.14); color:var(--neutro); }
@@ -195,6 +198,10 @@
         <table id="tablaZona"></table>
         <div class="callout" style="margin-top:16px;" id="zonaCallout"></div>
       </div>
+    </div>
+    <div class="panel" style="margin-top:18px;">
+      <div style="font-size:13px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Detalle por zona, abierto por tipo de servicio</div>
+      <table id="tablaZonaTipo"></table>
     </div>
   </section>
 
@@ -424,6 +431,22 @@ const zonasBajoMeta = DATA.zonas.filter(z=>z.nps < DATA.meta);
 document.getElementById('zonaCallout').innerHTML = zonasBajoMeta.length
   ? `<b>Bajo meta:</b> ${zonasBajoMeta.map(z=>`${z.zona} (${z.nps}%)`).join(' y ')} todavía no alcanza el ${DATA.meta}% institucional.`
   : `<b>Todas las zonas sobre la meta</b> de ${DATA.meta}% este mes.`;
+
+// ---- Table: Zona x Tipo (total + apertura Instala/Repara) ----
+if (DATA.zonaTipo) {
+  let rowsZonaTipo = '<tr><th>Zona</th><th>NPS</th><th>vs. Meta</th><th>Encuestas</th></tr>';
+  DATA.zonas.slice().sort((a,b)=>b.nps-a.nps).forEach(z=>{
+    const gap = +(z.nps - DATA.meta).toFixed(1);
+    const gapTxt = gap>=0 ? `<span style="color:var(--promotor)">+${gap}</span>` : `<span style="color:var(--detractor)">${gap}</span>`;
+    rowsZonaTipo += `<tr class="row-total"><td>${z.zona} — Total</td><td><span class="badge ${npsClass(z.nps)}">${z.nps}%</span></td><td>${gapTxt}</td><td>${z.total}</td></tr>`;
+    DATA.zonaTipo.filter(zt=>zt.zona===z.zona).sort((a,b)=>b.nps-a.nps).forEach(zt=>{
+      const gapSub = +(zt.nps - DATA.meta).toFixed(1);
+      const gapSubTxt = gapSub>=0 ? `<span style="color:var(--promotor)">+${gapSub}</span>` : `<span style="color:var(--detractor)">${gapSub}</span>`;
+      rowsZonaTipo += `<tr class="row-sub"><td>${zt.tipo}</td><td><span class="badge ${npsClass(zt.nps)}">${zt.nps}%</span></td><td>${gapSubTxt}</td><td>${zt.total}</td></tr>`;
+    });
+  });
+  document.getElementById('tablaZonaTipo').innerHTML = rowsZonaTipo;
+}
 
 // ---- Table: Tipo ----
 let rowsTipo = '<tr><th>Tipo</th><th>NPS</th><th>Encuestas</th><th>Detractores</th></tr>';
