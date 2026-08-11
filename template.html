@@ -220,8 +220,8 @@
 
   <section>
     <div class="section-title"><span class="num">05</span><h2>Ranking de técnicos (mín. 5 encuestas)</h2></div>
-    <p class="section-desc">Ordenado de mayor a menor NPS individual. Base para reconocimiento y para focalizar coaching/capacitación.</p>
-    <div class="panel"><table id="tablaTecnicos"></table></div>
+    <p class="section-desc">Ordenado de mayor a menor NPS individual dentro de cada agencia/zona. Base para reconocimiento y para focalizar coaching/capacitación.</p>
+    <div id="tecnicosPorZona"></div>
   </section>
 
   <section>
@@ -459,18 +459,28 @@ const brecha = (tipoSorted[0].nps - tipoSorted[1].nps).toFixed(1);
 document.getElementById('tipoCallout').innerHTML =
   `La brecha de <b>${brecha} pts</b> entre ${tipoSorted[0].tipo} y ${tipoSorted[1].tipo} sugiere foco de mejora en el protocolo de ${tipoSorted[1].tipo.toLowerCase()}: tiempos de resolución, comunicación de causa raíz y seguimiento post-visita.`;
 
-// ---- Table: Tecnicos ----
-let rowsTec = '<tr><th>#</th><th>Técnico</th><th>NPS</th><th>Encuestas</th><th>Prom. / Neu. / Det.</th></tr>';
-DATA.tecnicos.slice().sort((a,b)=>b.nps-a.nps).forEach((t,i)=>{
-  rowsTec += `<tr>
-    <td>${i+1}</td>
-    <td>${titleCase(t.tecnico)}</td>
-    <td><span class="badge ${npsClass(t.nps)}">${t.nps}%</span></td>
-    <td>${t.total}</td>
-    <td><span style="color:#1fa971">${t.P}</span> / <span style="color:#e2962e">${t.N}</span> / <span style="color:#e2523e">${t.D}</span></td>
-  </tr>`;
+// ---- Table: Tecnicos, dividido por zona/agencia ----
+const zonaOrden = DATA.zonas.slice().sort((a,b)=>b.total-a.total).map(z=>z.zona);
+let tecnicosHtml = '';
+zonaOrden.forEach(zona => {
+  const tecsZona = DATA.tecnicos.filter(t=>t.zona===zona).sort((a,b)=>b.nps-a.nps);
+  if (!tecsZona.length) return;
+  let rowsTec = '<tr><th>#</th><th>Técnico</th><th>NPS</th><th>Encuestas</th><th>Prom. / Neu. / Det.</th></tr>';
+  tecsZona.forEach((t,i)=>{
+    rowsTec += `<tr>
+      <td>${i+1}</td>
+      <td>${titleCase(t.tecnico)}</td>
+      <td><span class="badge ${npsClass(t.nps)}">${t.nps}%</span></td>
+      <td>${t.total}</td>
+      <td><span style="color:#1fa971">${t.P}</span> / <span style="color:#e2962e">${t.N}</span> / <span style="color:#e2523e">${t.D}</span></td>
+    </tr>`;
+  });
+  tecnicosHtml += `<div class="panel" style="margin-bottom:16px;">
+    <div style="font-size:13px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">${zona} · ${tecsZona.length} técnico${tecsZona.length===1?'':'s'}</div>
+    <table>${rowsTec}</table>
+  </div>`;
 });
-document.getElementById('tablaTecnicos').innerHTML = rowsTec;
+document.getElementById('tecnicosPorZona').innerHTML = tecnicosHtml;
 
 // ---- Highlights: top / bottom técnicos ----
 function techCard(t, kind){
