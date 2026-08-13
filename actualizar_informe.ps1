@@ -22,8 +22,12 @@ function Zona-Display($raw) {
 
 $ErrorActionPreference = "Stop"
 
-$ExcelPath = "C:\Users\jvodn\Downloads\Web\BBDD\NPS GENERAL.xlsm"
-$RepoDir   = "C:\Users\jvodn\Downloads\Web\informe-nps"
+# Rutas relativas a la ubicacion del propio script, para que funcione sin importar
+# en que unidad/carpeta vivan "Web" (siempre que BBDD e informe-nps sigan siendo
+# carpetas hermanas dentro de esa carpeta "Web").
+$RepoDir   = $PSScriptRoot
+$WebRoot   = Split-Path $RepoDir -Parent
+$ExcelPath = Join-Path $WebRoot "BBDD\NPS GENERAL.xlsm"
 $TemplatePath = Join-Path $RepoDir "template.html"
 $OutputPath   = Join-Path $RepoDir "index.html"
 
