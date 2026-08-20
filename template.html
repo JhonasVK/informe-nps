@@ -463,7 +463,7 @@ document.getElementById('tipoCallout').innerHTML =
 const zonaOrden = DATA.zonas.slice().sort((a,b)=>b.total-a.total).map(z=>z.zona);
 let tecnicosHtml = '';
 zonaOrden.forEach(zona => {
-  const tecsZona = DATA.tecnicos.filter(t=>t.zona===zona).sort((a,b)=>b.nps-a.nps);
+  const tecsZona = DATA.tecnicos.filter(t=>t.zona===zona).sort((a,b)=>a.nps-b.nps);
   if (!tecsZona.length) return;
   let rowsTec = '<tr><th>#</th><th>Técnico</th><th>NPS</th><th>Encuestas</th><th>Prom. / Neu. / Det.</th></tr>';
   tecsZona.forEach((t,i)=>{
