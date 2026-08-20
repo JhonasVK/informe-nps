@@ -9,7 +9,11 @@ param(
     [int]$Mes = (Get-Date).Month,
     [int]$Anio = (Get-Date).Year,
     [double]$Meta = 86,
-    [string[]]$Colaboradores = @('COBRA', 'SATNET')
+    [string[]]$Colaboradores = @('COBRA', 'SATNET'),
+    # Ruta compartida donde se exporta el NPS por tecnico para que lo lea el
+    # Portal de Tecnicos (repo aparte, C:\Reiterados\portal-tecnicos). No es
+    # relativa porque "Web" y "Reiterados" son arboles de carpetas distintos.
+    [string]$PortalNpsOutput = 'C:\Reiterados\bbdd\nps-tecnicos.json'
 )
 
 # Nombre de zona a mostrar por cada valor crudo de AG_tec en la hoja BBDD.
@@ -323,6 +327,28 @@ $data = [ordered]@{
 
 $json = $data | ConvertTo-Json -Depth 6 -Compress
 if ($json -match '</script') { Write-Host "ERROR: los datos contienen una secuencia insegura, abortando." -ForegroundColor Red; exit 1 }
+
+# ---------- 9b. Exportar NPS por tecnico para el Portal de Tecnicos ----------
+# El Portal de Tecnicos no tiene el RUT de la BBDD de NPS (esta hoja solo trae
+# nombre), asi que el cruce final por persona lo hace el propio portal
+# (generar_portal.js) usando el mismo nombre corto del login. Aqui solo se
+# exporta el agregado por (tecnico, zona) tal cual ya se calculo arriba.
+try {
+    $npsExport = [ordered]@{
+        periodo     = $data.periodo
+        periodoSlug = $periodoSlug
+        meta        = $Meta
+        generadoEl  = $data.generadoEl
+        tecnicos    = $tecnicos
+    }
+    $npsJson = $npsExport | ConvertTo-Json -Depth 4 -Compress
+    $portalNpsDir = Split-Path $PortalNpsOutput -Parent
+    if (-not (Test-Path $portalNpsDir)) { New-Item -ItemType Directory -Force -Path $portalNpsDir | Out-Null }
+    [System.IO.File]::WriteAllText($PortalNpsOutput, $npsJson, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Host "==> NPS por tecnico exportado para el Portal de Tecnicos: $PortalNpsOutput"
+} catch {
+    Write-Host "AVISO: no se pudo exportar el NPS para el Portal de Tecnicos ($($_.Exception.Message)). El informe NPS igual se genera normalmente." -ForegroundColor Yellow
+}
 
 if (-not (Test-Path $TemplatePath)) { Write-Host "ERROR: no se encontro template.html en $RepoDir" -ForegroundColor Red; exit 1 }
 $html = Get-Content $TemplatePath -Raw -Encoding UTF8
