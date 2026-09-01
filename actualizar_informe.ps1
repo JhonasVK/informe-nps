@@ -96,22 +96,27 @@ Write-Host "==> Procesando hoja BBDD (esto puede tardar ~2 min por el tamano del
 $reader = [System.Xml.XmlReader]::Create($sheetFile)
 $currentRow = $null
 $rowIdx = 0
-$matched = New-Object System.Collections.Generic.List[object]
-$mesStr = "$Mes"
+$allMatched = New-Object System.Collections.Generic.List[object]
 $mesesDisponiblesEnBBDD = @{}
+$mesesRespondidasEnBBDD = @{}
 
 function Process-Row($r) {
     if ($Colaboradores -contains $r[28] -and $r[32] -eq 'ACTIVO' -and $r[39] -eq '0') {
         $fechaSerial = [double]$r[11]
         $anioFila = [System.DateTime]::FromOADate($fechaSerial).Year
         $mesFila = [string]$r[26]
+        $notaFila = if ($r[13] -and [string]$r[13] -ne 'NULL') { [string]$r[13] } else { $null }
         $claveMes = "$anioFila-$mesFila"
         $script:mesesDisponiblesEnBBDD[$claveMes] = ($script:mesesDisponiblesEnBBDD[$claveMes] + 1)
-        if ($mesFila -ne $mesStr -or $anioFila -ne $Anio) { return }
-        $script:matched.Add([pscustomobject]@{
+        if ($notaFila -ne $null) {
+            $script:mesesRespondidasEnBBDD[$claveMes] = ($script:mesesRespondidasEnBBDD[$claveMes] + 1)
+        }
+        $script:allMatched.Add([pscustomobject]@{
+            anio    = $anioFila
+            mes     = $mesFila
             tecnico = [string]$r[6]
             dia     = [int]$r[33]
-            nota    = if ($r[13] -and [string]$r[13] -ne 'NULL') { [string]$r[13] } else { $null }
+            nota    = $notaFila
             obs     = if ($r[14] -and [string]$r[14] -ne 'NULL') { [string]$r[14] } else { $null }
             nps     = [string]$r[29]
             tipo    = [string]$r[31]
@@ -140,9 +145,33 @@ while ($reader.Read()) {
 if ($currentRow -ne $null) { Process-Row $currentRow }
 $reader.Close()
 
+function Get-Matched($anio, $mes) {
+    $mesStr = "$mes"
+    return $allMatched | Where-Object { $_.anio -eq $anio -and $_.mes -eq $mesStr }
+}
+
+$mesFueExplicito = $PSBoundParameters.ContainsKey('Mes') -or $PSBoundParameters.ContainsKey('Anio')
+
+$matched = Get-Matched $Anio $Mes
 $enviadas = $matched.Count
 $respondidas = $matched | Where-Object { $_.nota -ne $null }
 Write-Host "==> Enviadas=$enviadas Respondidas=$($respondidas.Count)"
+
+if ($respondidas.Count -eq 0 -and -not $mesFueExplicito -and $mesesRespondidasEnBBDD.Count -gt 0) {
+    # No se paso -Mes/-Anio explicito (es una corrida automatica del dia a dia) y el mes
+    # calendario actual todavia no tiene respuestas: usar el ultimo mes con datos en vez
+    # de fallar, para que el informe publicado nunca quede desactualizado sin necesidad.
+    $ultimaClave = $mesesRespondidasEnBBDD.Keys | Sort-Object { $p = $_ -split '-'; [int]$p[0]*100 + [int]$p[1] } | Select-Object -Last 1
+    $partes = $ultimaClave -split '-'
+    $Anio = [int]$partes[0]
+    $Mes = [int]$partes[1]
+    Write-Host "==> $($MESES_ES[(Get-Date).Month]) $((Get-Date).Year) aun sin respuestas; usando el ultimo mes disponible: $($MESES_ES[$Mes]) $Anio" -ForegroundColor Yellow
+    $matched = Get-Matched $Anio $Mes
+    $enviadas = $matched.Count
+    $respondidas = $matched | Where-Object { $_.nota -ne $null }
+    Write-Host "==> Enviadas=$enviadas Respondidas=$($respondidas.Count)"
+}
+
 if ($respondidas.Count -eq 0) {
     Write-Host "ERROR: no hay encuestas respondidas para $($MESES_ES[$Mes]) $Anio con Colaborador=$($Colaboradores -join '/')." -ForegroundColor Red
     if ($mesesDisponiblesEnBBDD.Count -gt 0) {
