@@ -188,8 +188,14 @@
     </div>
   </section>
 
+  <section id="seccionTendencia" style="display:none;">
+    <div class="section-title"><span class="num">03</span><h2>Tendencia mensual</h2></div>
+    <p class="section-desc">Evolución del NPS general mes a mes, según los informes ya publicados.</p>
+    <div class="panel" style="height:260px;"><canvas id="chartTendencia"></canvas></div>
+  </section>
+
   <section>
-    <div class="section-title"><span class="num">03</span><h2>Desglose por zona</h2></div>
+    <div class="section-title"><span class="num">04</span><h2>Desglose por zona</h2></div>
     <p class="section-desc">Comparativa de NPS entre zonas, cada una frente a la meta institucional.</p>
     <div class="two-col">
       <div class="panel" style="height:320px;"><canvas id="chartZona"></canvas></div>
@@ -206,7 +212,7 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">04</span><h2>Desglose por tipo de intervención</h2></div>
+    <div class="section-title"><span class="num">05</span><h2>Desglose por tipo de intervención</h2></div>
     <p class="section-desc">Comparativa de NPS entre servicios de instalación y reparación.</p>
     <div class="two-col">
       <div class="panel"><canvas id="chartTipo" height="140"></canvas></div>
@@ -219,13 +225,13 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">05</span><h2>Ranking de técnicos (mín. 5 encuestas)</h2></div>
+    <div class="section-title"><span class="num">06</span><h2>Ranking de técnicos (mín. 5 encuestas)</h2></div>
     <p class="section-desc">Ordenado de mayor a menor NPS individual dentro de cada agencia/zona. Base para reconocimiento y para focalizar coaching/capacitación.</p>
     <div id="tecnicosPorZona"></div>
   </section>
 
   <section>
-    <div class="section-title"><span class="num">06</span><h2>Mejor y menor desempeño</h2></div>
+    <div class="section-title"><span class="num">07</span><h2>Mejor y menor desempeño</h2></div>
     <p class="section-desc">Cruce del ranking con las observaciones textuales que dejaron los clientes, para identificar la causa raíz detrás del número — no solo el puntaje.</p>
     <div class="perf-grid">
       <div>
@@ -240,7 +246,7 @@
   </section>
 
   <section>
-    <div class="section-title"><span class="num">07</span><h2>Conclusiones y recomendaciones</h2></div>
+    <div class="section-title"><span class="num">08</span><h2>Conclusiones y recomendaciones</h2></div>
     <div class="rec-list" id="recList"></div>
   </section>
 </main>
@@ -248,7 +254,7 @@
 <footer id="footerText"></footer>
 
 <script>
-const DATA = {"periodo":"Septiembre 2026","periodoSlug":"2026-09","zona":"Punta Arenas y Coyhaique","meta":86,"enviadas":381,"respondidas":111,"promotores":96,"neutros":9,"detractores":6,"nps":81.1,"daily":[{"dia":1,"P":13,"N":2,"D":2,"total":17,"nps":64.7},{"dia":2,"P":16,"N":1,"D":1,"total":18,"nps":83.3},{"dia":3,"P":22,"N":1,"D":1,"total":24,"nps":87.5},{"dia":4,"P":20,"N":1,"D":0,"total":21,"nps":95.2},{"dia":5,"P":7,"N":3,"D":1,"total":11,"nps":54.5},{"dia":7,"P":18,"N":1,"D":1,"total":20,"nps":85}],"weekly":[{"semana":1,"P":96,"N":9,"D":6,"total":111,"nps":81.1}],"tipo":[{"tipo":"Instala","P":42,"N":2,"D":3,"total":47,"nps":83},{"tipo":"Repa","P":54,"N":7,"D":3,"total":64,"nps":79.7}],"zonas":[{"zona":"Punta Arenas","P":77,"N":7,"D":5,"total":89,"nps":80.9,"metaGap":-5.1},{"zona":"Coyhaique","P":19,"N":2,"D":1,"total":22,"nps":81.8,"metaGap":-4.2}],"zonaTipo":[{"zona":"Coyhaique","tipo":"Instala","P":15,"N":1,"D":1,"total":17,"nps":82.4,"metaGap":-3.6},{"zona":"Coyhaique","tipo":"Repa","P":4,"N":1,"D":0,"total":5,"nps":80,"metaGap":-6},{"zona":"Punta Arenas","tipo":"Instala","P":27,"N":1,"D":2,"total":30,"nps":83.3,"metaGap":-2.7},{"zona":"Punta Arenas","tipo":"Repa","P":50,"N":6,"D":3,"total":59,"nps":79.7,"metaGap":-6.3}],"tecnicos":[{"tecnico":"AXEL LEONARDO ALFARO ALVAREZ","zona":"Coyhaique","P":6,"N":1,"D":1,"total":8,"nps":62.5},{"tecnico":"JULIO LOPEZ CORTES","zona":"Coyhaique","P":5,"N":1,"D":0,"total":6,"nps":83.3},{"tecnico":"LUIS EDUARDO CISTERNAS OYARZO","zona":"Coyhaique","P":8,"N":0,"D":0,"total":8,"nps":100},{"tecnico":"LUIS ALFONSO BARRIENTOS MUNOZ","zona":"Punta Arenas","P":9,"N":0,"D":2,"total":11,"nps":63.6},{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","zona":"Punta Arenas","P":3,"N":1,"D":1,"total":5,"nps":40},{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","zona":"Punta Arenas","P":5,"N":1,"D":2,"total":8,"nps":37.5},{"tecnico":"MIGUEL ALEJANDRO ALVARADO VIVAR","zona":"Punta Arenas","P":8,"N":2,"D":0,"total":10,"nps":80},{"tecnico":"JOSE ALEXIS BARRIA ALMONACID","zona":"Punta Arenas","P":6,"N":0,"D":0,"total":6,"nps":100},{"tecnico":"ROBERTO ESTEBAN DIAZ GARRIDO","zona":"Punta Arenas","P":6,"N":0,"D":0,"total":6,"nps":100},{"tecnico":"VICTOR HUGO BARRIA ALMONACID","zona":"Punta Arenas","P":5,"N":0,"D":0,"total":5,"nps":100},{"tecnico":"MARCOS ALEJANDRO AGUILAR ROA","zona":"Punta Arenas","P":9,"N":0,"D":0,"total":9,"nps":100},{"tecnico":"LUIS ALFONSO TORRES MILLAQUEN","zona":"Punta Arenas","P":5,"N":0,"D":0,"total":5,"nps":100},{"tecnico":"JUAN CARLOS ULLOA MORAGA","zona":"Punta Arenas","P":5,"N":0,"D":0,"total":5,"nps":100}],"highlights":{"top":[{"tecnico":"MIGUEL ALEJANDRO ALVARADO VIVAR","nps":80,"total":10,"N":2,"D":0,"tags":["Mayor volumen del equipo, sin detractores"],"quotes":["Me dio la posibilidad de poder hacer el cambio de instalacion um poco mas tarde de la hora acordada, ya que trabajo hasta tarde . Un caballero amable"]}],"bottom":[{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","nps":37.5,"total":8,"N":1,"D":2,"tags":["Tiempos de respuesta"],"quotes":["Ninguna solucion solo indico que estaba todo bien, pero se pierde el 5g","La demora en la reparacion"]},{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","nps":40,"total":5,"N":1,"D":1,"tags":["Ver comentarios de clientes"],"quotes":["Los visitadores estuvieron excelente. Pero fue muy dificil encontrar la ayuda por la web o la aplicacion, finalmente tuve que atender presencialmente","Rapides en el sistema de llamada para dar cuenta del problema"]},{"tecnico":"AXEL LEONARDO ALFARO ALVAREZ","nps":62.5,"total":8,"N":1,"D":1,"tags":["Ver comentarios de clientes"],"quotes":["Amable"]},{"tecnico":"LUIS ALFONSO BARRIENTOS MUNOZ","nps":63.6,"total":11,"N":0,"D":2,"tags":["Ver comentarios de clientes"],"quotes":["Presentacion del tecnico, (nombre,cargo,etc) 2da confirmacion del trabajo (segun lo planificado y estipulado con el cliente)","No puedo conectar la tv"]}]},"conclusiones":["\u003cstrong\u003eTendencia del mes:\u003c/strong\u003e el NPS paso de 81.1% (semana 1) a 81.1% (semana 1), con una pendiente promedio de +0 pts NPS por semana.","\u003cstrong\u003eMeta (86%):\u003c/strong\u003e el NPS general de 81.1% esta 4.9 pts bajo la meta. Punta Arenas (80.9%) y Coyhaique (81.8%) todavia no la alcanza -- priorizar ahi el seguimiento.","\u003cstrong\u003eRepa como palanca de mejora:\u003c/strong\u003e con 79.7% vs 83% de Instala, priorizar auditorias de calidad y refuerzo de capacitacion en ese protocolo (brecha de 3.3 pts).","\u003cstrong\u003eCoaching dirigido:\u003c/strong\u003e priorizar retroalimentacion 1:1 con Eduardo Andres Witto Mansilla, Gonzalo Rodrigo Carcamo Maldonado, Axel Leonardo Alfaro Alvarez, Luis Alfonso Barrientos Munoz, cuyos comentarios apuntan a causas concretas y accionables.","\u003cstrong\u003eReconocimiento y buenas practicas:\u003c/strong\u003e Miguel Alejandro Alvarado Vivar cerraron el mes sin detractores (o casi) pese a buen volumen -- usarlos como referentes en instancias de capacitacion interna.","\u003cstrong\u003eTasa de respuesta (29.1%):\u003c/strong\u003e evaluar canal y timing de envio de la encuesta para mejorar la representatividad estadistica, especialmente en tecnicos con pocas respuestas."],"archivos":[{"slug":"2026-09","label":"Septiembre 2026","url":"/informe-nps/2026-09/"},{"slug":"2026-08","label":"Agosto 2026","url":"/informe-nps/2026-08/"},{"slug":"2026-07","label":"Julio 2026","url":"/informe-nps/2026-07/"}],"basePath":"/informe-nps","generadoEl":"2026-09-08 11:04"};
+const DATA = {"periodo":"Septiembre 2026","periodoSlug":"2026-09","zona":"Punta Arenas y Coyhaique","meta":86,"enviadas":381,"respondidas":111,"promotores":96,"neutros":9,"detractores":6,"nps":81.1,"daily":[{"dia":1,"P":13,"N":2,"D":2,"total":17,"nps":64.7},{"dia":2,"P":16,"N":1,"D":1,"total":18,"nps":83.3},{"dia":3,"P":22,"N":1,"D":1,"total":24,"nps":87.5},{"dia":4,"P":20,"N":1,"D":0,"total":21,"nps":95.2},{"dia":5,"P":7,"N":3,"D":1,"total":11,"nps":54.5},{"dia":7,"P":18,"N":1,"D":1,"total":20,"nps":85}],"weekly":[{"semana":1,"P":96,"N":9,"D":6,"total":111,"nps":81.1}],"tipo":[{"tipo":"Instala","P":42,"N":2,"D":3,"total":47,"nps":83},{"tipo":"Repa","P":54,"N":7,"D":3,"total":64,"nps":79.7}],"zonas":[{"zona":"Punta Arenas","P":77,"N":7,"D":5,"total":89,"nps":80.9,"metaGap":-5.1},{"zona":"Coyhaique","P":19,"N":2,"D":1,"total":22,"nps":81.8,"metaGap":-4.2}],"zonaTipo":[{"zona":"Coyhaique","tipo":"Instala","P":15,"N":1,"D":1,"total":17,"nps":82.4,"metaGap":-3.6},{"zona":"Coyhaique","tipo":"Repa","P":4,"N":1,"D":0,"total":5,"nps":80,"metaGap":-6},{"zona":"Punta Arenas","tipo":"Instala","P":27,"N":1,"D":2,"total":30,"nps":83.3,"metaGap":-2.7},{"zona":"Punta Arenas","tipo":"Repa","P":50,"N":6,"D":3,"total":59,"nps":79.7,"metaGap":-6.3}],"tecnicos":[{"tecnico":"AXEL LEONARDO ALFARO ALVAREZ","zona":"Coyhaique","P":6,"N":1,"D":1,"total":8,"nps":62.5},{"tecnico":"JULIO LOPEZ CORTES","zona":"Coyhaique","P":5,"N":1,"D":0,"total":6,"nps":83.3},{"tecnico":"LUIS EDUARDO CISTERNAS OYARZO","zona":"Coyhaique","P":8,"N":0,"D":0,"total":8,"nps":100},{"tecnico":"LUIS ALFONSO BARRIENTOS MUNOZ","zona":"Punta Arenas","P":9,"N":0,"D":2,"total":11,"nps":63.6},{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","zona":"Punta Arenas","P":3,"N":1,"D":1,"total":5,"nps":40},{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","zona":"Punta Arenas","P":5,"N":1,"D":2,"total":8,"nps":37.5},{"tecnico":"MIGUEL ALEJANDRO ALVARADO VIVAR","zona":"Punta Arenas","P":8,"N":2,"D":0,"total":10,"nps":80},{"tecnico":"JOSE ALEXIS BARRIA ALMONACID","zona":"Punta Arenas","P":6,"N":0,"D":0,"total":6,"nps":100},{"tecnico":"ROBERTO ESTEBAN DIAZ GARRIDO","zona":"Punta Arenas","P":6,"N":0,"D":0,"total":6,"nps":100},{"tecnico":"VICTOR HUGO BARRIA ALMONACID","zona":"Punta Arenas","P":5,"N":0,"D":0,"total":5,"nps":100},{"tecnico":"MARCOS ALEJANDRO AGUILAR ROA","zona":"Punta Arenas","P":9,"N":0,"D":0,"total":9,"nps":100},{"tecnico":"LUIS ALFONSO TORRES MILLAQUEN","zona":"Punta Arenas","P":5,"N":0,"D":0,"total":5,"nps":100},{"tecnico":"JUAN CARLOS ULLOA MORAGA","zona":"Punta Arenas","P":5,"N":0,"D":0,"total":5,"nps":100}],"highlights":{"top":[{"tecnico":"MIGUEL ALEJANDRO ALVARADO VIVAR","nps":80,"total":10,"N":2,"D":0,"tags":["Mayor volumen del equipo, sin detractores"],"quotes":["Me dio la posibilidad de poder hacer el cambio de instalacion um poco mas tarde de la hora acordada, ya que trabajo hasta tarde . Un caballero amable"]}],"bottom":[{"tecnico":"EDUARDO ANDRES WITTO MANSILLA","nps":37.5,"total":8,"N":1,"D":2,"tags":["Tiempos de respuesta"],"quotes":["Ninguna solucion solo indico que estaba todo bien, pero se pierde el 5g","La demora en la reparacion"]},{"tecnico":"GONZALO RODRIGO CARCAMO MALDONADO","nps":40,"total":5,"N":1,"D":1,"tags":["Ver comentarios de clientes"],"quotes":["Los visitadores estuvieron excelente. Pero fue muy dificil encontrar la ayuda por la web o la aplicacion, finalmente tuve que atender presencialmente","Rapides en el sistema de llamada para dar cuenta del problema"]},{"tecnico":"AXEL LEONARDO ALFARO ALVAREZ","nps":62.5,"total":8,"N":1,"D":1,"tags":["Ver comentarios de clientes"],"quotes":["Amable"]},{"tecnico":"LUIS ALFONSO BARRIENTOS MUNOZ","nps":63.6,"total":11,"N":0,"D":2,"tags":["Ver comentarios de clientes"],"quotes":["Presentacion del tecnico, (nombre,cargo,etc) 2da confirmacion del trabajo (segun lo planificado y estipulado con el cliente)","No puedo conectar la tv"]}]},"conclusiones":["\u003cstrong\u003eTendencia del mes:\u003c/strong\u003e el NPS paso de 81.1% (semana 1) a 81.1% (semana 1), con una pendiente promedio de +0 pts NPS por semana.","\u003cstrong\u003eMeta (86%):\u003c/strong\u003e el NPS general de 81.1% esta 4.9 pts bajo la meta. Punta Arenas (80.9%) y Coyhaique (81.8%) todavia no la alcanza -- priorizar ahi el seguimiento.","\u003cstrong\u003eRepa como palanca de mejora:\u003c/strong\u003e con 79.7% vs 83% de Instala, priorizar auditorias de calidad y refuerzo de capacitacion en ese protocolo (brecha de 3.3 pts).","\u003cstrong\u003eCoaching dirigido:\u003c/strong\u003e priorizar retroalimentacion 1:1 con Eduardo Andres Witto Mansilla, Gonzalo Rodrigo Carcamo Maldonado, Axel Leonardo Alfaro Alvarez, Luis Alfonso Barrientos Munoz, cuyos comentarios apuntan a causas concretas y accionables.","\u003cstrong\u003eReconocimiento y buenas practicas:\u003c/strong\u003e Miguel Alejandro Alvarado Vivar cerraron el mes sin detractores (o casi) pese a buen volumen -- usarlos como referentes en instancias de capacitacion interna.","\u003cstrong\u003eTasa de respuesta (29.1%):\u003c/strong\u003e evaluar canal y timing de envio de la encuesta para mejorar la representatividad estadistica, especialmente en tecnicos con pocas respuestas."],"archivos":[{"slug":"2026-09","label":"Septiembre 2026","url":"/informe-nps/2026-09/"},{"slug":"2026-08","label":"Agosto 2026","url":"/informe-nps/2026-08/"},{"slug":"2026-07","label":"Julio 2026","url":"/informe-nps/2026-07/"}],"tendencia":[{"slug":"2026-07","label":"Julio 2026","nps":85.6},{"slug":"2026-08","label":"Agosto 2026","nps":87.4},{"slug":"2026-09","label":"Septiembre 2026","nps":81.1}],"basePath":"/informe-nps","generadoEl":"2026-09-08 12:52"};
 
 function fmt1(n){ return (Math.round(n*10)/10).toFixed(1).replace('.0','').length ? (Math.round(n*10)/10) : n; }
 function npsClass(v){ return v>=85?'hi':(v>=75?'mid':'lo'); }
@@ -368,6 +374,27 @@ new Chart(document.getElementById('chartSemanal'), {
     scales: { y: { min:0, max:100, title:{display:true,text:'NPS %'}, grid:{color:'rgba(20,50,80,0.06)'} } }
   }
 });
+
+// ---- Chart Tendencia Mensual ----
+if (DATA.tendencia && DATA.tendencia.length > 1) {
+  document.getElementById('seccionTendencia').style.display = '';
+  new Chart(document.getElementById('chartTendencia'), {
+    type: 'line',
+    data: {
+      labels: DATA.tendencia.map(t=>t.label),
+      datasets: [
+        { label:'NPS mensual', data: DATA.tendencia.map(t=>t.nps), borderColor:'#0071ce', backgroundColor:'rgba(0,113,206,0.15)', fill:true, tension:0.25, pointRadius:4 },
+        { label:'Meta ('+DATA.meta+'%)', data: DATA.tendencia.map(()=>DATA.meta), borderColor:'#e2523e', borderDash:[5,4], borderWidth:1.5, pointRadius:0, tension:0 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position:'top', labels:{boxWidth:10} } },
+      scales: { y: { min:0, max:100, title:{display:true,text:'NPS %'}, grid:{color:'rgba(20,50,80,0.06)'} } }
+    }
+  });
+}
 
 // ---- Chart Zona: Punta Arenas vs Coyhaique (u otras) ----
 new Chart(document.getElementById('chartZona'), {
