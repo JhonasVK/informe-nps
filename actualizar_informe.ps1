@@ -11,9 +11,9 @@ param(
     [double]$Meta = 86,
     [string[]]$Colaboradores = @('COBRA', 'SATNET'),
     # Ruta compartida donde se exporta el NPS por tecnico para que lo lea el
-    # Portal de Tecnicos (repo aparte, C:\Reiterados\portal-tecnicos). No es
-    # relativa porque "Web" y "Reiterados" son arboles de carpetas distintos.
-    [string]$PortalNpsOutput = 'C:\Reiterados\bbdd\nps-tecnicos.json'
+    # Portal de Tecnicos (repo aparte, C:\Bases_Tigo\Reiterados\portal-tecnicos).
+    # No es relativa porque "NPS" y "Reiterados" son arboles de carpetas distintos.
+    [string]$PortalNpsOutput = 'C:\Bases_Tigo\Reiterados\bbdd\nps-tecnicos.json'
 )
 
 # Nombre de zona a mostrar por cada valor crudo de AG_tec en la hoja BBDD.
@@ -319,6 +319,26 @@ $archivos = @($mesesDisponibles | Sort-Object -Descending | ForEach-Object {
     [pscustomobject]@{ slug=$_; label="$($MESES_ES[$m]) $a"; url="$BasePath/$_/" }
 })
 
+# ---------- 8b. Tendencia mensual (lee el NPS ya publicado de cada mes archivado) ----------
+function Get-NpsDeArchivo($rutaArchivo) {
+    if (-not (Test-Path $rutaArchivo)) { return $null }
+    try {
+        $contenido = Get-Content $rutaArchivo -Raw -Encoding UTF8
+        if ($contenido -match 'const DATA = (\{.*\});') {
+            return ($Matches[1] | ConvertFrom-Json)
+        }
+    } catch {}
+    return $null
+}
+$tendencia = @($archivos | Sort-Object slug | ForEach-Object {
+    if ($_.slug -eq $periodoSlug) {
+        [pscustomobject]@{ slug = $_.slug; label = $_.label; nps = $npsGeneral }
+    } else {
+        $d = Get-NpsDeArchivo (Join-Path $RepoDir "$($_.slug)\index.html")
+        if ($d) { [pscustomobject]@{ slug = $_.slug; label = $_.label; nps = $d.nps } }
+    }
+}) | Where-Object { $_ -ne $null }
+
 # meses.json vive en la raiz del repo y se sobreescribe COMPLETO en cada corrida.
 # El template lo consulta en vivo (fetch) en vez de usar el DATA embebido de cada
 # pagina, porque una pagina archivada (ej. 2026-07/index.html) no se vuelve a tocar
@@ -350,6 +370,7 @@ $data = [ordered]@{
     highlights   = [ordered]@{ top=$topHighlights; bottom=$bottomHighlights }
     conclusiones = $conclusiones
     archivos     = $archivos
+    tendencia    = $tendencia
     basePath     = $BasePath
     generadoEl   = (Get-Date -Format "yyyy-MM-dd HH:mm")
 }
@@ -387,10 +408,13 @@ $final = $html.Replace('/*__DATA__*/', $json)
 Write-Host "==> index.html regenerado ($((Get-Item $OutputPath).Length) bytes)"
 Write-Host "==> Archivado en $periodoSlug/index.html"
 
+# Fecha de publicacion: la lee en vivo la tarjeta "Informe NPS" del indice Supervisor
+[System.IO.File]::WriteAllText((Join-Path $RepoDir 'actualizado.txt'), (Get-Date -Format 'dd-MM-yyyy HH:mm'), (New-Object System.Text.UTF8Encoding($false)))
+
 # ---------- 10. Commit y push ----------
 Push-Location $RepoDir
 try {
-    git add index.html "$periodoSlug/index.html" meses.json | Out-Null
+    git add index.html "$periodoSlug/index.html" meses.json actualizado.txt | Out-Null
     $diff = git diff --cached --name-only
     if (-not $diff) {
         Write-Host "==> No hay cambios respecto a la ultima publicacion. Nada que subir."
