@@ -152,10 +152,14 @@
      Azul marino + ambar, esquinas rectas, titulos livianos, tablas con encabezado marino. */
   body{ font-family:"Helvetica Neue","Hanken Grotesk",Helvetica,Arial,sans-serif; font-size:15px; line-height:1.55; }
   header.hero{
-    background:linear-gradient(90deg,#003575 0%,#003575 34%,rgba(0,53,117,.84) 52%,rgba(0,53,117,.38) 74%,rgba(0,53,117,.12) 100%),
-               var(--foto, url("fondo-portada.jpg")) 70% 24% / cover no-repeat #003575;
+    background:linear-gradient(90deg,#003575 0%,#003575 38%,rgba(0,53,117,0) 58%),
+               var(--foto, url("fondo-portada.jpg")) right center / auto 100% no-repeat #003575;
     border-bottom:0; padding:40px 6vw 78px; color:#ffffff;
   }
+  /* en pantalla ancha el texto corta antes de la foto */
+  @media (min-width:1181px){ .subtitle, .meta-row, .archive-row{ max-width:52%; } }
+  /* pantallas medianas: el texto alcanza a la foto, se oscurece toda la cabecera */
+  @media (max-width:1180px){ header.hero{ background-image:linear-gradient(90deg,#003575 0%,rgba(0,53,117,.93) 48%,rgba(0,53,117,.6) 100%), var(--foto, url("fondo-portada.jpg")); background-position:0 0, 78% center; } }
   header.hero::after{ display:none; }
   .brand-row img{ background:#ffffff; padding:6px 12px; height:44px; }
   .brand-divider{ background:rgba(255,255,255,.3); }
@@ -171,7 +175,7 @@
   .archive-pill:hover{ background:rgba(255,255,255,.14); }
   .archive-pill.current{ background:#f0a500; border-color:#f0a500; color:#1d1a12; }
 
-  @media (max-width:760px){ header.hero{ background-image:linear-gradient(90deg,rgba(0,53,117,.95),rgba(0,53,117,.82)), var(--foto, url("fondo-portada.jpg")); } }
+  @media (max-width:760px){ header.hero{ background-image:linear-gradient(180deg,rgba(0,53,117,.55) 0%,rgba(0,53,117,.9) 34%,rgba(0,53,117,.96) 100%), var(--foto, url("fondo-portada.jpg")); background-position:0 0, 62% top; background-size:auto, auto 46%; } }
 
   .kpi-card{ border:0; border-top:3px solid #003575; border-radius:0; box-shadow:0 14px 30px -22px rgba(0,53,117,.55); }
   .kpi-card .label{ font-weight:600; letter-spacing:.1em; font-size:11px; }
